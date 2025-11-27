@@ -1,0 +1,308 @@
+/* ======================================================= */
+/* Estilos de Formularios y Controles */
+/* ======================================================= */
+
+form div {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+}
+
+label,
+input,
+select {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  width: 100%;
+}
+
+/* --- ETIQUETA SOLO LECTOR DE PANTALLA (para select sin label visible) --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+/* --- FIN --- */
+
+input[type="text"],
+input[type="time"],
+input[type="password"],
+input[type="date"], /* <-- AÑADIDO */
+select {
+  flex-grow: 1;
+  min-width: 200px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid var(--white2);
+  background-color: var(--white1);
+  color: var(--black);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* --- ESTILO PARA SELECT CON FILTRO --- */
+#justificar-usuario-filtro {
+  margin-bottom: 5px; /* Espacio entre filtro y select */
+}
+#justificar-alumno {
+  height: auto; /* Quitar altura fija si se usa size */
+  padding: 8px; /* Ajustar padding para select con size */
+}
+/* --- FIN --- */
+
+input:focus,
+select:focus {
+  border-color: var(--red2);
+  box-shadow: 0 0 0 0.2rem rgba(218, 43, 8, 0.25);
+  outline: none;
+}
+
+#form-agregar input,
+#form-agregar select,
+#login-form input,
+#form-justificar-falta input, /* <-- AÑADIDO */
+#form-justificar-falta select,
+#form-editar input, /* <-- AÑADIDO */
+#form-editar select {
+  /* <-- AÑADIDO */
+  margin: 0 0 10px;
+}
+
+/* Estilos de Botones */
+button {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: transparent;
+  border: none;
+  color: #b72107;
+}
+
+button[type="submit"] {
+  background-color: var(--red);
+  color: var(--white1);
+  border: none;
+  cursor: pointer;
+  padding: 12px 25px;
+  margin-top: 10px;
+  border-radius: 5px;
+  display: block;
+  width: auto;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button[type="submit"]:hover {
+  background-color: var(--red2);
+  transform: translateY(-2px);
+}
+.ciclo-item .btn-eliminar-ciclo {
+  display: none;
+  transition: 1s;
+}
+.ciclo-item:hover .btn-eliminar-ciclo {
+  display: block;
+}
+
+/* --- INICIO ESTILOS BOTONES DE ACCIÓN USUARIO --- */
+/* Botón para editar usuario */
+.btn-edit-usuario {
+  font-size: 1.1rem;
+  color: #007bff; /* Azul */
+}
+.btn-edit-usuario:hover {
+  color: #0056b3;
+}
+
+/* Botón para generar código de barras junto al eliminar */
+.btn-barcode {
+  font-size: 1.1rem;
+  color: #0b5; /* Verde */
+}
+.btn-barcode:hover {
+  color: #0a8;
+}
+/* --- FIN ESTILOS BOTONES DE ACCIÓN USUARIO --- */
+
+/* Tabs de turno dentro del acordeón */
+.turno-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.turno-tab {
+  background: transparent;
+  border: 1px solid var(--white2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+.turno-tab.active {
+  background: var(--red);
+  color: var(--white1);
+  border-color: var(--red2);
+}
+
+/* Estilo para el resumen de horarios */
+.schedule-summary {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: var(--blue2);
+  font-family: var(--font-body);
+  text-align: center;
+  padding: 5px;
+  border: 1px dashed var(--white2);
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Estilos para el selector de días */
+#dias-asistencia-selector,
+#edit-dias-asistencia-selector {
+  /* <-- AÑADIDO */
+  margin-bottom: 20px;
+}
+.day-buttons-container {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+.day-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: var(--black);
+  border: 1px solid #aaa;
+  font-weight: bold;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.day-btn.active {
+  background-color: var(--red);
+  color: var(--white1);
+  border-color: var(--red2);
+}
+.day-btn:hover:not(.active) {
+  background-color: #ddd;
+}
+
+/* --- NUEVOS ESTILOS PARA SELECTOR DE HORA --- */
+.time-picker-group {
+  flex-grow: 1;
+  min-width: 250px;
+  width: auto;
+}
+
+.time-picker-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: var(--black);
+  width: 100%;
+}
+
+.time-picker-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.time-picker-inputs select {
+  flex-grow: 1;
+  width: auto;
+  min-width: 50px;
+  padding: 12px 8px;
+  margin-bottom: 0;
+}
+
+/* Específico para el select de AM/PM */
+.time-picker-inputs select[id*="-ampm"] {
+  flex-grow: 0.5;
+  min-width: 60px;
+}
+
+.time-picker-inputs span {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--black);
+}
+
+/* --- NUEVOS ESTILOS: Componente Autocomplete --- */
+
+.autocomplete-container {
+  position: relative;
+  flex-wrap: wrap;
+  gap: 0;
+  width: 100%;
+  /* Margen que antes tenían los inputs */
+}
+
+/* El input de búsqueda principal */
+#justificar-usuario-filtro {
+  width: 100%;
+  margin-bottom: 0; /* Quitamos el margen inferior */
+}
+
+/* Contenedor de los resultados */
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid var(--white2);
+  border-top: none;
+  z-index: 99;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-radius: 0 0 5px 5px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* * LA REGLA QUE OCULTABA TODO (.autocomplete-items div { display: none; }) 
+ * HA SIDO ELIMINADA.
+ */
+
+/* Estilo de cada item en la lista */
+.autocomplete-item {
+  display: block; /* Aseguramos que se muestre */
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--white1);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+/* El resaltado personalizado (adiós azul) */
+.autocomplete-item:hover {
+  background-color: #f4f4f4; /* var(--white1) */
+}
+
+/* Resaltado para teclado */
+.autocomplete-item.autocomplete-active {
+  background-color: var(--red2);
+  color: var(--white1);
+}
+
+/* Estilo para el texto que coincide */
+.autocomplete-item strong {
+  color: var(--red);
+  font-weight: 900;
+}
+.autocomplete-item.autocomplete-active strong {
+  color: var(--white1);
+}
+
+/* --- Fin Estilos Autocomplete --- */

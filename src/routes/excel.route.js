@@ -3,21 +3,17 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const ExcelJS = require("exceljs");
-// --- IMPORTACIONES CORREGIDAS ---
 const { normalizarTexto, getFullName } = require("../utils/helpers.js");
 const {
-  estiloFaltaJustificada, // <-- MODIFICADO
-  estilosEstadoEstudiante,
+  estiloFaltaJustificada,
   estiloFalta,
   estiloNoAsiste,
   estiloDocenteRegistrado,
-  estiloTardanzaJustificada, // <-- AÑADIDO
 } = require("../services/excel/excel.constants.js");
-const usuariosPath = path.join(__dirname, "../../data/usuarios.json");
-// --- FIN IMPORTACIONES ---
 
 const router = express.Router();
 const registrosPath = path.join(__dirname, "../../Registros");
+const usuariosPath = path.join(__dirname, "../../data/usuarios.json");
 
 // Helper para asegurar que la carpeta Registros exista
 function ensureRegistrosDir() {
@@ -59,31 +55,24 @@ router.get("/:archivo", (req, res) => {
     archivo.includes("/") ||
     !archivo.endsWith(".xlsx")
   ) {
-    console.log(
-      `Excel Route: Intento de acceso inválido a archivo: ${archivo}`
-    );
     return res.status(400).send("Nombre de archivo inválido.");
   }
   const ruta = path.join(registrosPath, archivo);
 
   if (!fs.existsSync(ruta)) {
-    console.log(`Excel Route: Archivo no encontrado para descarga: ${archivo}`);
     return res.status(404).send("Archivo no encontrado.");
   }
-  console.log(`Excel Route: Solicitud de descarga para ${archivo}`);
   res.download(ruta, archivo, (err) => {
     if (err) {
       console.error(`Excel Route: Error al descargar ${archivo}:`, err);
       if (!res.headersSent) {
         res.status(500).send("Error al descargar el archivo.");
       }
-    } else {
-      console.log(`Excel Route: Archivo ${archivo} descargado.`);
     }
   });
 });
 
-// --- RUTA PREVIEW MODIFICADA PARA MÚLTIPLES HOJAS Y JUSTIFICADO ---
+// GET /api/excel/preview/:archivo
 router.get("/preview/:archivo", async (req, res) => {
   const archivo = req.params.archivo;
   if (
@@ -98,9 +87,6 @@ router.get("/preview/:archivo", async (req, res) => {
   if (!fs.existsSync(ruta)) {
     return res.status(404).json({ mensaje: "Archivo no encontrado" });
   }
-  console.log(
-    `Excel Route: Generando preview para ${archivo} (todas las hojas)`
-  );
 
   try {
     const workbook = new ExcelJS.Workbook();
@@ -108,25 +94,16 @@ router.get("/preview/:archivo", async (req, res) => {
 
     const sheetsData = [];
 
-    // --- MAPA DE COLORES ACTUALIZADO ---
+    // Mapa de colores solo para docentes y estados generales
     const colorMap = {
-      [estilosEstadoEstudiante.puntual.fill.fgColor.argb.substring(2)]:
-        "puntual",
-      [estilosEstadoEstudiante.tolerancia.fill.fgColor.argb.substring(2)]:
-        "tolerancia",
-      [estilosEstadoEstudiante.tarde.fill.fgColor.argb.substring(2)]: "tarde",
       [estiloFalta.fill.fgColor.argb.substring(2)]: "falta",
       [estiloNoAsiste.fill.fgColor.argb.substring(2)]: "no_asiste",
       [estiloDocenteRegistrado.fill.fgColor.argb.substring(2)]: "docente",
       [estiloFaltaJustificada.fill.fgColor.argb.substring(2)]:
-        "falta_justificada", // <-- MODIFICADO
-      [estiloTardanzaJustificada.fill.fgColor.argb.substring(2)]:
-        "tardanza_justificada", // <-- AÑADIDO
+        "falta_justificada",
     };
-    // --- FIN ACTUALIZACIÓN ---
 
-    workbook.eachSheet((worksheet, sheetId) => {
-      console.log(` - Procesando hoja: ${worksheet.name}`);
+    workbook.eachSheet((worksheet) => {
       let csvContent = "";
 
       worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
@@ -202,11 +179,10 @@ router.get("/preview/:archivo", async (req, res) => {
             finalValue = finalValue.trim();
             if (finalValue.length > 0) rowHasContent = true;
 
-            // --- DETECTAR ESTADO (CORREGIDO) ---
+            // Detectar estado
             if (!isTitleRow && !isHeaderRow && colNumber === 5) {
               const upperVal = finalValue.toUpperCase();
 
-              // 1. Priorizar el TEXTO para estados literales
               if (upperVal === "FALTA") {
                 attendanceStatus = "falta";
               } else if (upperVal === "NO ASISTE") {
@@ -214,7 +190,6 @@ router.get("/preview/:archivo", async (req, res) => {
               } else if (upperVal === "F. JUSTIFICADA") {
                 attendanceStatus = "falta_justificada";
               } else if (finalValue) {
-                // 2. Si es un valor (hora), usar el COLOR para el estado
                 const fillColor = cell.fill;
                 if (
                   fillColor &&
@@ -226,18 +201,12 @@ router.get("/preview/:archivo", async (req, res) => {
                   const bgColor = fillColor.fgColor.argb
                     .toUpperCase()
                     .substring(2);
-                  // Usar colorMap, default a 'registrado' (para horas)
                   attendanceStatus = colorMap[bgColor] || "registrado";
-                  // Sobrescribir si es tardanza justificada (J)
-                  if (upperVal.endsWith("(J)")) {
-                    attendanceStatus = "tardanza_justificada";
-                  }
                 } else {
-                  attendanceStatus = "registrado"; // Default para horas sin color
+                  attendanceStatus = "registrado";
                 }
               }
             }
-            // --- FIN DETECTAR ESTADO ---
           }
 
           if (/[",\n\r]/.test(finalValue)) {
@@ -274,9 +243,9 @@ router.get("/preview/:archivo", async (req, res) => {
   }
 });
 
-// --- NUEVA RUTA PARA JUSTIFICAR FALTAS ---
+// POST /api/excel/justificar
 router.post("/justificar", async (req, res) => {
-  const { codigo, fecha } = req.body; // fecha debe ser "DD-MM-YYYY"
+  const { codigo, fecha } = req.body;
 
   if (!codigo || !fecha) {
     return res
@@ -294,7 +263,6 @@ router.post("/justificar", async (req, res) => {
   }
 
   try {
-    // 1. Encontrar al usuario y su hoja
     const usuarios = JSON.parse(fs.readFileSync(usuariosPath, "utf8"));
     const usuario = usuarios.find((u) => u.codigo === codigo);
 
@@ -304,21 +272,13 @@ router.post("/justificar", async (req, res) => {
         .json({ exito: false, mensaje: "Código de usuario no encontrado." });
     }
 
-    let sheetName = "";
-    if (usuario.rol === "docente") sheetName = "Docentes";
-    else if (usuario.turno === "mañana") sheetName = "Mañana";
-    else if (usuario.turno === "tarde") sheetName = "Tarde";
+    // Simplificado: Solo buscar en hoja Docentes
+    const sheetName = "Docentes";
 
-    if (!sheetName) {
-      return res
-        .status(400)
-        .json({ exito: false, mensaje: "No se pudo determinar la hoja." });
-    }
-
-    // 2. Abrir el Excel y buscar al alumno
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(rutaExcel);
     const hoja = workbook.getWorksheet(sheetName);
+
     if (!hoja) {
       return res
         .status(404)
@@ -326,7 +286,7 @@ router.post("/justificar", async (req, res) => {
     }
 
     let filaEncontrada = null;
-    hoja.eachRow((row, rowNumber) => {
+    hoja.eachRow((row) => {
       let celdaNombre = row.getCell(2).value;
       if (typeof celdaNombre === "object" && celdaNombre?.richText) {
         celdaNombre = celdaNombre.richText.map((t) => t.text).join("");
@@ -337,40 +297,32 @@ router.post("/justificar", async (req, res) => {
         normalizarTexto(getFullName(usuario))
       ) {
         filaEncontrada = row;
-        return false; // Detener bucle
+        return false;
       }
     });
 
     if (!filaEncontrada) {
       return res.status(404).json({
         exito: false,
-        mensaje: `Usuario ${getFullName(
-          usuario
-        )} no encontrado en la hoja ${sheetName}.`,
+        mensaje: `Docente ${getFullName(usuario)} no encontrado en la hoja.`,
       });
     }
 
-    // 3. Verificar y aplicar la justificación
     const celdaEstado = filaEncontrada.getCell(5);
     const valorActual = celdaEstado.value?.toString().toUpperCase();
 
     if (valorActual === "FALTA") {
-      celdaEstado.value = "F. JUSTIFICADA"; // <-- MODIFICADO
-
-      // --- CORRECCIÓN DEFINITIVA ---
-      // Asignar un clon profundo del objeto de estilo a la celda
+      celdaEstado.value = "F. JUSTIFICADA";
       celdaEstado.style = {
-        fill: { ...estiloFaltaJustificada.fill }, // <-- MODIFICADO
-        font: { ...estiloFaltaJustificada.font }, // <-- MODIFICADO
-        alignment: { ...estiloFaltaJustificada.alignment }, // <-- MODIFICADO
-        border: { ...estiloFaltaJustificada.border }, // <-- MODIFICADO
+        fill: { ...estiloFaltaJustificada.fill },
+        font: { ...estiloFaltaJustificada.font },
+        alignment: { ...estiloFaltaJustificada.alignment },
+        border: { ...estiloFaltaJustificada.border },
       };
-      // --- FIN CORRECCIÓN ---
 
       await workbook.xlsx.writeFile(rutaExcel);
       res.json({ exito: true, mensaje: "Falta justificada correctamente." });
     } else if (valorActual === "F. JUSTIFICADA") {
-      // <-- MODIFICADO
       res
         .status(400)
         .json({ exito: false, mensaje: "Esta falta ya estaba justificada." });
@@ -379,7 +331,7 @@ router.post("/justificar", async (req, res) => {
         exito: false,
         mensaje: `No se puede justificar. Estado actual: ${
           valorActual || "VACÍO"
-        }. (Solo se puede justificar una 'FALTA')`,
+        }.`,
       });
     }
   } catch (error) {
@@ -389,6 +341,5 @@ router.post("/justificar", async (req, res) => {
       .json({ exito: false, mensaje: "Error interno del servidor." });
   }
 });
-// --- FIN NUEVA RUTA ---
 
 module.exports = router;

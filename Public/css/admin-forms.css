@@ -1,3 +1,5 @@
+/* Public/css/admin-forms.css LIMPIO */
+
 /* ======================================================= */
 /* Estilos de Formularios y Controles */
 /* ======================================================= */
@@ -16,7 +18,6 @@ select {
   width: 100%;
 }
 
-/* --- ETIQUETA SOLO LECTOR DE PANTALLA (para select sin label visible) --- */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -28,12 +29,12 @@ select {
   white-space: nowrap;
   border-width: 0;
 }
-/* --- FIN --- */
 
 input[type="text"],
 input[type="time"],
 input[type="password"],
-input[type="date"], /* <-- AÑADIDO */
+input[type="date"],
+input[type="tel"],
 select {
   flex-grow: 1;
   min-width: 200px;
@@ -46,15 +47,10 @@ select {
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-/* --- ESTILO PARA SELECT CON FILTRO --- */
+/* Ajustes específicos */
 #justificar-usuario-filtro {
-  margin-bottom: 5px; /* Espacio entre filtro y select */
+  margin-bottom: 5px;
 }
-#justificar-alumno {
-  height: auto; /* Quitar altura fija si se usa size */
-  padding: 8px; /* Ajustar padding para select con size */
-}
-/* --- FIN --- */
 
 input:focus,
 select:focus {
@@ -66,11 +62,10 @@ select:focus {
 #form-agregar input,
 #form-agregar select,
 #login-form input,
-#form-justificar-falta input, /* <-- AÑADIDO */
+#form-justificar-falta input,
 #form-justificar-falta select,
-#form-editar input, /* <-- AÑADIDO */
+#form-editar input,
 #form-editar select {
-  /* <-- AÑADIDO */
   margin: 0 0 10px;
 }
 
@@ -101,71 +96,10 @@ button[type="submit"]:hover {
   background-color: var(--red2);
   transform: translateY(-2px);
 }
-.ciclo-item .btn-eliminar-ciclo {
-  display: none;
-  transition: 1s;
-}
-.ciclo-item:hover .btn-eliminar-ciclo {
-  display: block;
-}
 
-/* --- INICIO ESTILOS BOTONES DE ACCIÓN USUARIO --- */
-/* Botón para editar usuario */
-.btn-edit-usuario {
-  font-size: 1.1rem;
-  color: #007bff; /* Azul */
-}
-.btn-edit-usuario:hover {
-  color: #0056b3;
-}
-
-/* Botón para generar código de barras junto al eliminar */
-.btn-barcode {
-  font-size: 1.1rem;
-  color: #0b5; /* Verde */
-}
-.btn-barcode:hover {
-  color: #0a8;
-}
-/* --- FIN ESTILOS BOTONES DE ACCIÓN USUARIO --- */
-
-/* Tabs de turno dentro del acordeón */
-.turno-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.turno-tab {
-  background: transparent;
-  border: 1px solid var(--white2);
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-transform: capitalize;
-}
-.turno-tab.active {
-  background: var(--red);
-  color: var(--white1);
-  border-color: var(--red2);
-}
-
-/* Estilo para el resumen de horarios */
-.schedule-summary {
-  margin-bottom: 10px;
-  font-size: 0.9rem;
-  color: var(--blue2);
-  font-family: var(--font-body);
-  text-align: center;
-  padding: 5px;
-  border: 1px dashed var(--white2);
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-/* Estilos para el selector de días */
+/* Selector de Días */
 #dias-asistencia-selector,
 #edit-dias-asistencia-selector {
-  /* <-- AÑADIDO */
   margin-bottom: 20px;
 }
 .day-buttons-container {
@@ -184,6 +118,7 @@ button[type="submit"]:hover {
   font-weight: bold;
   transition: all 0.2s;
   flex-shrink: 0;
+  cursor: pointer;
 }
 .day-btn.active {
   background-color: var(--red);
@@ -194,7 +129,7 @@ button[type="submit"]:hover {
   background-color: #ddd;
 }
 
-/* --- NUEVOS ESTILOS PARA SELECTOR DE HORA --- */
+/* Selector de Hora (Horarios) */
 .time-picker-group {
   flex-grow: 1;
   min-width: 250px;
@@ -219,14 +154,13 @@ button[type="submit"]:hover {
 .time-picker-inputs select {
   flex-grow: 1;
   width: auto;
-  min-width: 50px;
-  padding: 12px 8px;
+  min-width: 60px;
+  padding: 10px 5px;
   margin-bottom: 0;
 }
 
-/* Específico para el select de AM/PM */
+/* AM/PM un poco más ancho si es necesario, o igual */
 .time-picker-inputs select[id*="-ampm"] {
-  flex-grow: 0.5;
   min-width: 60px;
 }
 
@@ -236,23 +170,21 @@ button[type="submit"]:hover {
   color: var(--black);
 }
 
-/* --- NUEVOS ESTILOS: Componente Autocomplete --- */
-
+/* Componente Autocomplete */
 .autocomplete-container {
   position: relative;
   flex-wrap: wrap;
   gap: 0;
   width: 100%;
-  /* Margen que antes tenían los inputs */
 }
 
-/* El input de búsqueda principal */
-#justificar-usuario-filtro {
+#justificar-usuario-filtro,
+#teacher-group-filtro,
+#report-rule-group-filtro {
   width: 100%;
-  margin-bottom: 0; /* Quitamos el margen inferior */
+  margin-bottom: 0;
 }
 
-/* Contenedor de los resultados */
 .autocomplete-items {
   position: absolute;
   border: 1px solid var(--white2);
@@ -268,13 +200,8 @@ button[type="submit"]:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* * LA REGLA QUE OCULTABA TODO (.autocomplete-items div { display: none; }) 
- * HA SIDO ELIMINADA.
- */
-
-/* Estilo de cada item en la lista */
 .autocomplete-item {
-  display: block; /* Aseguramos que se muestre */
+  display: block;
   padding: 10px 12px;
   cursor: pointer;
   border-bottom: 1px solid var(--white1);
@@ -285,18 +212,15 @@ button[type="submit"]:hover {
   border-bottom: none;
 }
 
-/* El resaltado personalizado (adiós azul) */
 .autocomplete-item:hover {
-  background-color: #f4f4f4; /* var(--white1) */
+  background-color: #f4f4f4;
 }
 
-/* Resaltado para teclado */
 .autocomplete-item.autocomplete-active {
   background-color: var(--red2);
   color: var(--white1);
 }
 
-/* Estilo para el texto que coincide */
 .autocomplete-item strong {
   color: var(--red);
   font-weight: 900;
@@ -304,5 +228,3 @@ button[type="submit"]:hover {
 .autocomplete-item.autocomplete-active strong {
   color: var(--white1);
 }
-
-/* --- Fin Estilos Autocomplete --- */

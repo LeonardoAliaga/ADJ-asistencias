@@ -1,7 +1,5 @@
-/* Proyecto/Public/css/admin-whatsapp-rules.css */
-/* Estilos para la lista de reglas (Estudiantes y Reportes) */
+/* Public/css/admin-whatsapp-rules.css LIMPIO */
 
-#student-rules-list,
 #report-rules-list {
   margin-bottom: 20px;
   max-height: 300px;
@@ -12,7 +10,6 @@
   background-color: #fff;
 }
 
-#student-rules-list p,
 #report-rules-list p {
   color: #666;
   font-style: italic;
@@ -31,12 +28,7 @@
   align-items: center;
   padding: 8px 10px;
   border-bottom: 1px dashed var(--white2);
-  background-color: transparent;
-  box-shadow: none;
-  border-left: none;
-  margin-bottom: 0;
-  border-radius: 0;
-  gap: 10px; /* Espacio entre el texto y los botones */
+  gap: 10px;
 }
 
 .rules-ul li:last-child {
@@ -50,14 +42,12 @@
   line-height: 1.4;
 }
 
-/* Contenedor para los botones de acción de la regla */
 .rule-actions {
   display: flex;
   gap: 8px;
-  flex-shrink: 0; /* Evita que los botones se encojan */
+  flex-shrink: 0;
 }
 
-/* Estilo base para los botones de acción en la lista */
 .btn-rule-action {
   background: none;
   border: none;
@@ -68,31 +58,21 @@
   transition: all 0.2s;
 }
 
-.btn-rule-action:disabled {
-  color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Botón de Enviar Manualmente */
 .btn-send-manual {
   color: var(--color-exito);
 }
-.btn-send-manual:not(:disabled):hover {
+.btn-send-manual:hover {
   background-color: #e6ffe6;
-  color: #155724;
 }
 
-/* Botón de Eliminar Regla */
 .btn-delete-rule {
   color: var(--red);
 }
-.btn-delete-rule:not(:disabled):hover {
+.btn-delete-rule:hover {
   background-color: #f8d7da;
-  color: #721c24;
 }
 
-/* Estilo para los botones "Agregar" (Petición 3) */
-#btn-add-student-rule,
+/* Botón agregar reporte */
 #btn-add-report-rule {
   font-family: var(--font-body);
   text-transform: uppercase;
@@ -108,12 +88,9 @@
   transition: background-color 0.3s, transform 0.2s;
 }
 
-#btn-add-student-rule i,
 #btn-add-report-rule i {
   margin-right: 5px;
 }
-
-#btn-add-student-rule:hover,
 #btn-add-report-rule:hover {
   background-color: var(--blue1);
   transform: translateY(-1px);

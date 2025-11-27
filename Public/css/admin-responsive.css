@@ -1,30 +1,43 @@
+/* Public/css/admin-responsive.css LIMPIO */
+
 @media (max-width: 768px) {
   h1 {
-    font-size: 4rem;
-  }
+    font-size: 2.5rem;
+  } /* Ajustado para que no sea tan gigante en móvil */
   h2,
   .sub-header {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
   }
+
   label,
   input,
-  select {
-    font-size: 2rem;
+  select,
+  button {
+    font-size: 1.1rem;
   }
-  .schedule-summary {
-    font-size: 2rem;
-  }
+
   section {
-    padding: 25px;
-    margin: 15px 30px;
+    padding: 15px;
+    margin: 10px 0;
   }
+
   button[type="submit"] {
-    font-size: 2rem;
+    font-size: 1.2rem;
+    width: 100%;
   }
+
   li {
-    font-size: 2rem;
+    font-size: 1rem;
   }
+
   #archivos-excel a {
-    font-size: 2rem;
+    font-size: 1rem;
+  }
+
+  /* Ajuste para el grid del dashboard */
+  .admin-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 }

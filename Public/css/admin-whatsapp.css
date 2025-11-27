@@ -1,10 +1,9 @@
-/* Proyecto/Public/css/admin-whatsapp.css */
+/* Public/css/admin-whatsapp.css LIMPIO */
 
 #vista-whatsapp h2,
 #vista-whatsapp h3,
 #vista-whatsapp h4,
 #vista-whatsapp h5 {
-  /* Añadido h5 */
   text-align: left;
   letter-spacing: 1px;
   margin-top: 1.5rem;
@@ -18,11 +17,10 @@
   margin-bottom: 1.5rem;
 }
 #vista-whatsapp h4 {
-  font-size: 1.2rem; /* Tamaño para sub-secciones */
+  font-size: 1.2rem;
 }
 #vista-whatsapp h5 {
-  font-size: 1rem; /* Tamaño para formularios de agregar */
-  /* color: var(--blue2); */
+  font-size: 1rem;
 }
 
 .whatsapp-status-section {
@@ -37,8 +35,6 @@
 }
 .whatsapp-status-section h3 {
   margin: 0;
-  padding: 0;
-  border: none;
   font-size: 1.1rem;
   display: flex;
   align-items: center;
@@ -82,34 +78,19 @@
   cursor: pointer;
   color: var(--blue2);
   padding: 5px;
-  line-height: 1;
-}
-#btn-refresh-whatsapp-status:disabled {
-  color: #ccc;
-  cursor: not-allowed;
 }
 
-/* --- ESTILOS DE TOGGLES (PETICIÓN 1) --- */
+/* Toggles */
 .toggle-switch-container {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 15px;
 }
-/* Estilo para el Master Toggle */
-.toggle-switch-container.master-toggle {
-  padding-bottom: 15px;
-}
 .toggle-switch-container.master-toggle span {
   font-size: 1.1rem;
   font-weight: bold;
   color: var(--black);
-}
-/* Línea divisoria */
-hr.divider {
-  border: none;
-  border-top: 1px solid var(--white2);
-  margin: 0 0 15px 0;
 }
 
 .switch {
@@ -117,7 +98,7 @@ hr.divider {
   display: inline-block;
   width: 60px;
   height: 34px;
-  flex-shrink: 0; /* Evita que se encoja */
+  flex-shrink: 0;
 }
 .switch input {
   opacity: 0;
@@ -133,6 +114,7 @@ hr.divider {
   bottom: 0;
   background-color: #ccc;
   transition: 0.4s;
+  border-radius: 34px;
 }
 .slider:before {
   position: absolute;
@@ -143,6 +125,7 @@ hr.divider {
   bottom: 4px;
   background-color: white;
   transition: 0.4s;
+  border-radius: 50%;
 }
 input:checked + .slider {
   background-color: var(--color-exito);
@@ -150,21 +133,6 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
-.slider.round {
-  border-radius: 34px;
-}
-.slider.round:before {
-  border-radius: 50%;
-}
-
-#whatsapp-enabled-label,
-#student-notifications-label,
-#teacher-notifications-label,
-#report-enabled-label,
-#whatsapp-enabled-general-label {
-  font-weight: bold;
-}
-/* --- FIN ESTILOS DE TOGGLES --- */
 
 .whatsapp-config-section {
   background-color: var(--white1);
@@ -181,17 +149,8 @@ input:checked + .slider:before {
   margin-bottom: 15px;
   align-items: end;
 }
-.form-grid-whatsapp label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-.form-grid-whatsapp.simple {
-  grid-template-columns: 1fr;
-}
 
-/* --- Botones y Mensajes --- */
+/* Botones y Mensajes */
 #btn-save-whatsapp-config {
   font-family: var(--font-body);
   text-transform: uppercase;
@@ -203,11 +162,7 @@ input:checked + .slider:before {
   padding: 10px 20px;
   margin-top: 10px;
   border-radius: 5px;
-  display: inline-block;
   transition: background-color 0.3s, transform 0.2s;
-}
-#btn-save-whatsapp-config i {
-  margin-right: 5px;
 }
 #btn-save-whatsapp-config:hover {
   background-color: #218838;
@@ -238,7 +193,7 @@ input:checked + .slider:before {
   border: 1px solid #f5c6cb;
 }
 
-/* Notificación Sticky Cambios sin Guardar */
+/* Alerta cambios sin guardar */
 .unsaved-alert {
   background-color: #fff3cd;
   color: #856404;
@@ -257,21 +212,12 @@ input:checked + .slider:before {
   justify-content: space-between;
   align-items: center;
 }
-.unsaved-alert i {
-  margin-right: 8px;
-  color: #cea100;
-}
 #btn-jump-to-save {
   background: none;
   border: none;
   color: var(--blue2);
   font-size: 1.3rem;
   cursor: pointer;
-  padding: 0 5px;
-  line-height: 1;
-}
-#btn-jump-to-save:hover {
-  color: var(--blue1);
 }
 
 @media (max-width: 768px) {
@@ -280,9 +226,5 @@ input:checked + .slider:before {
   }
   .unsaved-alert {
     top: 55px;
-    font-size: 0.85rem;
-  }
-  #btn-jump-to-save {
-    font-size: 1.1rem;
   }
 }

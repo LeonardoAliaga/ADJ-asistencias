@@ -1,239 +1,174 @@
-const { Client, LocalAuth, NoAuth, MessageMedia } = require("whatsapp-web.js");
+// Whatsapp/WhatsappClient.js
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const color = require("ansi-colors");
 const fs = require("fs");
-const path = require("path"); // <--- AÑADIDO
+const path = require("path");
 
-// Variable para controlar si el cliente está listo
 let isWhatsappReady = false;
 let whatsappClient = null;
 let currentQR = null;
+let isInitializing = false;
 
-const localAuthPath = path.join(__dirname, "../../LocalAuth"); // <--- AÑADIDO
+const localAuthPath = path.join(__dirname, "../../LocalAuth");
 
-// --- NUEVA FUNCIÓN DE REINICIO ---
-const deleteLocalAuthAndRestart = (trigger = "unknown") => {
+const deleteLocalAuthAndRestart = async (trigger = "unknown") => {
+  if (isInitializing) return;
+  isInitializing = true;
+
   console.warn(
-    `${color.red(
-      "Whatsapp"
-    )} Fallo de sesión (${trigger}). Borrando LocalAuth y reiniciando...`
+    `${color.red("Whatsapp")} Reiniciando sistema por: ${trigger}...`
   );
   isWhatsappReady = false;
   currentQR = null;
 
-  // 1. Destruir el cliente actual en memoria para liberar archivos
-  const destroyPromise = whatsappClient
-    ? whatsappClient.destroy().catch((e) => {
-        console.warn(
-          `${color.yellow("Whatsapp")} Error al destruir cliente (esperado):`,
-          e.message
-        );
-      })
-    : Promise.resolve();
+  if (whatsappClient) {
+    try {
+      await whatsappClient.destroy();
+      console.log(`${color.yellow("Whatsapp")} Cliente anterior destruido.`);
+    } catch (e) {
+      console.error(
+        `${color.red("Whatsapp")} Error al destruir (ignorable):`,
+        e.message
+      );
+    }
+    whatsappClient = null;
+  }
 
-  whatsappClient = null;
+  // Esperar liberación de archivos
+  console.log(
+    `${color.yellow("Whatsapp")} Esperando liberación de archivos...`
+  );
+  await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  // 2. Esperar a que se destruya y luego borrar la carpeta
-  destroyPromise.then(() => {
-    setTimeout(() => {
-      try {
-        if (fs.existsSync(localAuthPath)) {
-          fs.rmSync(localAuthPath, { recursive: true, force: true });
-          console.log(
-            `${color.green("Whatsapp")} Carpeta LocalAuth borrada exitosamente.`
-          );
-        }
-      } catch (e) {
-        console.error(
-          `${color.red(
-            "Whatsapp"
-          )} Error al borrar LocalAuth (EBUSY?). Es posible que se requiera un reinicio manual de la app.`,
-          e.message
-        );
-        // Si falla aquí (ej. EBUSY de nuevo), no podemos hacer más.
-        // Pero al menos ya no debería crashear la app.
-        return; // No intentar reiniciar si no se pudo borrar
+  // Borrar datos solo si es un error de sesión
+  if (
+    trigger === "auth_failure" ||
+    trigger === "disconnected" ||
+    trigger === "manual_restart"
+  ) {
+    try {
+      if (fs.existsSync(localAuthPath)) {
+        fs.rmSync(localAuthPath, { recursive: true, force: true });
+        console.log(`${color.green("Whatsapp")} Carpeta LocalAuth borrada.`);
       }
+    } catch (e) {
+      console.error(
+        `${color.red("Whatsapp")} No se pudo borrar LocalAuth (¿Bloqueado?):`,
+        e.message
+      );
+    }
+  }
 
-      // 3. Reiniciar la inicialización
-      console.log(`${color.yellow("Whatsapp")} Reiniciando cliente...`);
-      initializeWhatsappClient();
-    }, 1000); // 1 segundo de espera para que el SO libere los archivos
-  });
+  isInitializing = false;
+  initializeWhatsappClient();
 };
-// --- FIN NUEVA FUNCIÓN ---
 
 const initializeWhatsappClient = () => {
-  console.log(`${color.yellow("Whatsapp")} Inicializando...`);
+  if (whatsappClient) return;
+
+  console.log(`${color.cyan("Whatsapp")} 🚀 Inicializando cliente...`);
+
   try {
     whatsappClient = new Client({
       authStrategy: new LocalAuth({
+        clientId: "client-one",
         dataPath: "LocalAuth",
       }),
-      webVersionCache: {
-        type: "remote",
-        remotePath:
-          "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+      // CORRECCIÓN: Eliminamos webVersionCache para usar siempre la última compatible
+      puppeteer: {
+        headless: true,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-accelerated-2d-canvas",
+          "--no-first-run",
+          "--no-zygote",
+          "--disable-gpu",
+          // Eliminado --single-process que causa inestabilidad en Windows
+        ],
       },
-      // puppeteer: {
-      //   headless: true,
-      //   args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      // }
     });
 
     whatsappClient.on("qr", (qr) => {
-      currentQR = qr; // Almacena el QR
-      console.log(
-        `${color.yellow(
-          "Whatsapp"
-        )} QR Recibido. Almacenado para el panel admin.`
-      );
+      currentQR = qr;
+      isWhatsappReady = false;
+      console.log(`${color.yellow("Whatsapp")} 📱 Nuevo QR generado.`);
       qrcode.generate(qr, { small: true });
     });
 
-    whatsappClient.on("ready", async () => {
-      currentQR = null; // Limpia el QR al conectar
+    whatsappClient.on("ready", () => {
+      currentQR = null;
       isWhatsappReady = true;
-      console.log(
-        `${color.green("Whatsapp")} está listo en ${color.cyan(
-          "Asistencias Ingemat"
-        )}`
-      );
+      console.log(`${color.green("Whatsapp")} ✅ LISTO Y CONECTADO.`);
     });
 
-    // --- MANEJO DE FALLOS MODIFICADO ---
-    whatsappClient.on("auth_failure", (error) => {
-      isWhatsappReady = false;
-      console.error(`${color.red("Whatsapp")} Fallo de autenticación:`, error);
-      deleteLocalAuthAndRestart("auth_failure"); // <--- LLAMAR A REINICIO
+    whatsappClient.on("authenticated", () => {
+      console.log(`${color.green("Whatsapp")} 🔐 Autenticado.`);
+      currentQR = null;
+    });
+
+    whatsappClient.on("auth_failure", (msg) => {
+      console.error(`${color.red("Whatsapp")} Fallo de autenticación:`, msg);
+      deleteLocalAuthAndRestart("auth_failure");
     });
 
     whatsappClient.on("disconnected", (reason) => {
-      currentQR = null;
+      console.warn(`${color.red("Whatsapp")} Desconectado:`, reason);
       isWhatsappReady = false;
-      console.warn(`${color.yellow("Whatsapp")} Desconectado:`, reason);
-      // Si la razón es una desconexión (logout), borramos la sesión
-      if (reason) {
-        deleteLocalAuthAndRestart("disconnected"); // <--- LLAMAR A REINICIO
-      }
-    });
-    // --- FIN MANEJO DE FALLOS ---
-
-    whatsappClient.on("error", (error) => {
-      isWhatsappReady = false;
-      console.error(`${color.red("Whatsapp Error:")}`, error);
-      // Errores genéricos
+      deleteLocalAuthAndRestart("disconnected");
     });
 
-    // --- CAPTURA DE ERROR MODIFICADA ---
-    whatsappClient.initialize().catch((error) => {
-      isWhatsappReady = false;
+    whatsappClient.initialize().catch((err) => {
       console.error(
-        `${color.red("Whatsapp")} Error CRÍTICO al inicializar:`,
-        error.message
+        `${color.red("Whatsapp")} Error inicialización:`,
+        err.message
       );
-      // Aquí capturamos el EBUSY y evitamos el crash
-      if (
-        error.message.includes("EBUSY") ||
-        error.message.includes("unlink") ||
-        error.message.includes("resource busy or locked")
-      ) {
-        console.warn(
-          `${color.yellow(
-            "Whatsapp"
-          )} Error EBUSY detectado. La sesión está bloqueada o corrupta.`
-        );
-        deleteLocalAuthAndRestart("initialize_catch_ebusy"); // <--- LLAMAR A REINICIO
-      } else {
-        // Otro error de inicialización, intentar reiniciar por si acaso
-        deleteLocalAuthAndRestart("initialize_catch_other");
-      }
+      if (!isInitializing) deleteLocalAuthAndRestart("init_error");
     });
-    // --- FIN CAPTURA DE ERROR ---
   } catch (error) {
-    isWhatsappReady = false;
-    console.error(
-      `${color.red("Whatsapp")} Error crítico al crear el cliente:`,
-      error
-    );
+    console.error(`${color.red("Whatsapp")} Error crítico constructor:`, error);
   }
 };
 
 const sendMessage = async (to, message) => {
   if (!isWhatsappReady || !whatsappClient) {
-    console.warn(
-      `${color.yellow("Whatsapp")} no está listo. Mensaje no enviado a ${to}.`
-    );
+    console.warn(`${color.yellow("Whatsapp")} No listo. Mensaje no enviado.`);
     return false;
   }
   try {
     let chatId = to;
-    if (/^\d+$/.test(to) && !to.includes("@")) {
-      chatId = `${to}@c.us`;
-    } else if (!to.includes("@g.us") && !to.includes("@c.us")) {
-      console.warn(
-        `${color.yellow(
-          "Whatsapp"
-        )} Destinatario inválido: ${to}. No es número ni ID de grupo.`
-      );
-      return false;
-    }
-    if (typeof message === "string") {
-      await whatsappClient.sendMessage(chatId, `${message}\n\n_Ingemat_`);
-    } else {
-      await whatsappClient.sendMessage(chatId, message);
-    }
+    if (!to.includes("@")) chatId = `${to}@c.us`;
 
-    console.log(`${color.green("Whatsapp")} Mensaje enviado a ${chatId}`);
+    await whatsappClient.sendMessage(chatId, message);
+    console.log(`${color.green("Whatsapp")} Enviado a ${chatId}`);
     return true;
   } catch (error) {
-    console.error(
-      `${color.red("Whatsapp")} Error al enviar mensaje a ${to}:`,
-      error.message
-    );
-    if (error.message.includes("Chat not found")) {
-      console.warn(
-        `${color.yellow("Whatsapp")} El chat ${to} no fue encontrado.`
-      );
-    }
+    console.error(`${color.red("Whatsapp")} Error enviando:`, error.message);
     return false;
   }
 };
 
 const getGroupChats = async () => {
-  if (!isWhatsappReady || !whatsappClient) {
-    console.warn(
-      `${color.yellow("Whatsapp")} no está listo para obtener chats.`
-    );
-    return [];
-  }
+  if (!isWhatsappReady || !whatsappClient) return [];
   try {
     const chats = await whatsappClient.getChats();
-    const groups = chats
+    return chats
       .filter((chat) => chat.isGroup)
       .map((chat) => ({ id: chat.id._serialized, name: chat.name }));
-    // --- NUEVO CONSOLE.LOG ---
-    console.log(
-      `${color.magenta("WhatsappClient")} getGroupChats: Encontrados ${
-        groups.length
-      } grupos.`
-    );
-    // --- FIN CONSOLE.LOG ---
-    return groups;
   } catch (error) {
-    console.error(`${color.red("Whatsapp")} Error al obtener chats:`, error);
+    console.error("Error obteniendo grupos:", error);
     return [];
   }
 };
 
-// Llama a la inicialización al cargar el módulo
-initializeWhatsappClient();
-
 module.exports = {
+  startClient: initializeWhatsappClient,
   sendMessage,
   getGroupChats,
   isWhatsappReady: () => isWhatsappReady,
   getQR: () => currentQR,
-  forceRestart: deleteLocalAuthAndRestart,
+  forceRestart: () => deleteLocalAuthAndRestart("manual_restart"),
   MessageMedia,
 };

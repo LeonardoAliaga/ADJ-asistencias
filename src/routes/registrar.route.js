@@ -69,15 +69,10 @@ router.post("/", async (req, res) => {
     minute: "2-digit",
     hour12: false,
   });
-  const horaNum = parseFloat(horaStr.replace(":", ".")); // Simple para comparar turno
 
-  // --- CALCULAR ESTADO PARA DOCENTE ---
-  // Asumimos turno Mañana si es antes de la 1PM (13:00), Tarde si es después.
-  // Esto permite usar los dos horarios configurados.
-  const turnoDetectado = horaNum < 13 ? "mañana" : "tarde";
-  const estado = estadoAsistencia("default", turnoDetectado, horaStr);
+  // Estado calculado con horario general
+  const estado = estadoAsistencia(null, null, horaStr);
 
-  // Guardar
   const guardado = await guardarRegistro(
     usuario,
     fechaStr,
@@ -93,7 +88,7 @@ router.post("/", async (req, res) => {
   let hora12h = convertTo12Hour(horaStr);
   if (isJustified) hora12h += " (J)";
 
-  // --- WHATSAPP DOCENTE ---
+  // WhatsApp
   const waConfig = readWhatsappConfig();
   if (
     waConfig.enabledGeneral &&
@@ -104,7 +99,6 @@ router.post("/", async (req, res) => {
     if (estado === "tarde") emoji = "❌";
     else if (estado === "tolerancia") emoji = "⚠️";
 
-    // Target único configurado
     const target = waConfig.teacherTargetId;
     if (target) {
       const msg = `Docente *${getFullName(
@@ -119,8 +113,8 @@ router.post("/", async (req, res) => {
     nombre: getFullName(usuario),
     hora: hora12h,
     rol: "docente",
-    estado: estado, // Devolver estado para mostrar color en frontend
-    turno: turnoDetectado,
+    estado: estado,
+    ciclo: "",
   });
 });
 

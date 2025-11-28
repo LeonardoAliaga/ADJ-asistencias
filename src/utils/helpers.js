@@ -1,35 +1,26 @@
-// src/utils/helpers.js (LIMPIO)
+// src/utils/helpers.js
 const fs = require("fs");
 const path = require("path");
 
 const horariosPath = path.join(__dirname, "../../data/horarios.json");
 
-// Obtener configuración de horarios
 function obtenerHorarios() {
   try {
     if (!fs.existsSync(horariosPath)) {
-      // Estructura simplificada solo para Default (Docentes)
       const defaultHorarios = {
-        default: {
-          mañana: { entrada: "08:00", tolerancia: "08:15" },
-          tarde: { entrada: "14:00", tolerancia: "14:15" },
-        },
+        default: { entrada: "08:00", tolerancia: "08:15" },
       };
       fs.writeFileSync(horariosPath, JSON.stringify(defaultHorarios, null, 2));
       return defaultHorarios;
     }
     const data = JSON.parse(fs.readFileSync(horariosPath, "utf8"));
-    // Asegurar estructura mínima
     if (!data.default) {
-      data.default = {
-        mañana: { entrada: "08:00", tolerancia: "08:15" },
-        tarde: { entrada: "14:00", tolerancia: "14:15" },
-      };
+      data.default = { entrada: "08:00", tolerancia: "08:15" };
     }
     return data;
   } catch (error) {
     console.error("Utils: Error horarios.json", error);
-    return { default: { mañana: {}, tarde: {} } };
+    return { default: { entrada: "08:00", tolerancia: "08:15" } };
   }
 }
 
@@ -59,20 +50,15 @@ function convertirAHoras(horaStr) {
   return h + m / 60;
 }
 
-// Lógica simplificada: Ya no recibe "cicloUsuario"
-function estadoAsistencia(cicloUsuarioIgnorado, turno, horaStr) {
+// Función general para docentes (sin turno/ciclo)
+function estadoAsistencia(cicloIgnored, turnoIgnored, horaStr) {
   const horariosConfig = obtenerHorarios();
   const horaNum = convertirAHoras(horaStr);
 
-  // Siempre usar configuración 'default'
-  const horarioTurno = horariosConfig.default
-    ? horariosConfig.default[turno]
-    : null;
+  const config = horariosConfig.default; // Siempre usa default
 
-  if (!horarioTurno) return "tarde"; // Fallback
-
-  const hEntrada = convertirAHoras(horarioTurno.entrada);
-  const hTol = convertirAHoras(horarioTurno.tolerancia);
+  const hEntrada = convertirAHoras(config.entrada);
+  const hTol = convertirAHoras(config.tolerancia);
 
   if (horaNum < hEntrada) return "puntual";
   if (horaNum <= hTol) return "tolerancia";

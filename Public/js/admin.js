@@ -3,10 +3,14 @@ import { cargarUsuarios, initUserFormEvents } from "./admin/users.js";
 import { cargarArchivosExcel, initModalEvents } from "./admin/excel-preview.js";
 import { initWhatsappAdmin } from "./admin/whatsapp.js";
 
+// --- FUNCIÓN DE NAVEGACIÓN ---
 async function mostrarVista(vistaId, buttonId) {
+  // Ocultar todas las vistas
   document.querySelectorAll(".vista-content").forEach((el) => {
     el.style.display = "none";
   });
+
+  // Mostrar la vista activa o default
   const vistaActiva = document.getElementById(vistaId);
   if (vistaActiva) {
     vistaActiva.style.display = "block";
@@ -15,6 +19,7 @@ async function mostrarVista(vistaId, buttonId) {
     buttonId = "btn-vista-inicio";
   }
 
+  // Actualizar botones del navbar
   document.querySelectorAll(".nav-button").forEach((btn) => {
     btn.classList.remove("active");
   });
@@ -23,17 +28,32 @@ async function mostrarVista(vistaId, buttonId) {
     botonActivo.classList.add("active");
   }
 
+  // Cargar datos según la vista
   if (vistaId === "vista-usuarios-completa") {
     await cargarUsuarios(true);
   } else if (vistaId === "vista-whatsapp") {
     initWhatsappAdmin();
   } else if (vistaId === "vista-principal") {
-    await cargarUsuarios();
-    await cargarArchivosExcel();
-    await cargarHorarios(); // <-- Cargar horarios
+    // Recarga segura de datos principales
+    try {
+      await cargarUsuarios();
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await cargarArchivosExcel();
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await cargarHorarios();
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
+// Helper para mensajes globales
 function showGlobalMessage(elementId, message, isError = false) {
   const element = document.getElementById(elementId);
   if (!element) return;
@@ -45,116 +65,111 @@ function showGlobalMessage(elementId, message, isError = false) {
   }, 4000);
 }
 
-// --- LÓGICA DE HORARIOS ---
-// Helpers para los selectores de hora
+// --- LÓGICA DE HORARIOS GENERAL ---
+
+// Rellena los <select> con horas y minutos
 function populateTimeSelects(hrSelect, minSelect) {
+  // Limpiar opciones previas
   hrSelect.innerHTML = "";
   minSelect.innerHTML = "";
+
+  // Horas 01-12
   for (let i = 1; i <= 12; i++) {
     const val = i.toString().padStart(2, "0");
-    hrSelect.options.add(new Option(val, val));
+    hrSelect.add(new Option(val, val));
   }
+  // Minutos 00-59
   for (let i = 0; i < 60; i++) {
     const val = i.toString().padStart(2, "0");
-    minSelect.options.add(new Option(val, val));
+    minSelect.add(new Option(val, val));
   }
 }
 
+// Setea los valores en los selects basándose en hora militar "HH:MM"
 function setPickerFrom24h(time24h, hrSelect, minSelect, ampmSelect) {
-  if (!time24h) return;
-  const [hours, minutes] = time24h.split(":").map(Number);
+  if (!time24h || typeof time24h !== "string" || !time24h.includes(":")) return;
+
+  const [hoursStr, minutesStr] = time24h.split(":");
+  let hours = parseInt(hoursStr);
+  const minutes = minutesStr; // String "00"
+
   const ampm = hours >= 12 ? "PM" : "AM";
+
+  // Convertir a formato 12h
   let hr12 = hours % 12;
   if (hr12 === 0) hr12 = 12;
+
+  // Asignar valores
   hrSelect.value = hr12.toString().padStart(2, "0");
-  minSelect.value = minutes.toString().padStart(2, "0");
+  minSelect.value = minutes;
   ampmSelect.value = ampm;
 }
 
+// Obtiene la hora militar "HH:MM" desde los selects
 function get24hFromPicker(hrId, minId, ampmId) {
   let hours = parseInt(document.getElementById(hrId).value, 10);
   const minutes = document.getElementById(minId).value;
   const ampm = document.getElementById(ampmId).value;
+
   if (ampm === "PM" && hours !== 12) hours += 12;
   if (ampm === "AM" && hours === 12) hours = 0;
+
   return `${hours.toString().padStart(2, "0")}:${minutes}`;
 }
 
+// Función principal de carga de horarios
 async function cargarHorarios() {
-  const em_hr = document.getElementById("entrada-manana-hr");
-  const em_min = document.getElementById("entrada-manana-min");
-  const em_ampm = document.getElementById("entrada-manana-ampm");
-  const tm_hr = document.getElementById("tolerancia-manana-hr");
-  const tm_min = document.getElementById("tolerancia-manana-min");
-  const tm_ampm = document.getElementById("tolerancia-manana-ampm");
+  const ent_hr = document.getElementById("entrada-hr");
+  const ent_min = document.getElementById("entrada-min");
+  const ent_ampm = document.getElementById("entrada-ampm");
+  const tol_hr = document.getElementById("tolerancia-hr");
+  const tol_min = document.getElementById("tolerancia-min");
+  const tol_ampm = document.getElementById("tolerancia-ampm");
 
-  const et_hr = document.getElementById("entrada-tarde-hr");
-  const et_min = document.getElementById("entrada-tarde-min");
-  const et_ampm = document.getElementById("entrada-tarde-ampm");
-  const tt_hr = document.getElementById("tolerancia-tarde-hr");
-  const tt_min = document.getElementById("tolerancia-tarde-min");
-  const tt_ampm = document.getElementById("tolerancia-tarde-ampm");
+  if (!ent_hr || !tol_hr) return;
 
-  if (!em_hr) return;
-
-  if (em_hr.options.length === 0) {
-    populateTimeSelects(em_hr, em_min);
-    populateTimeSelects(tm_hr, tm_min);
-    populateTimeSelects(et_hr, et_min);
-    populateTimeSelects(tt_hr, tt_min);
+  // 1. Rellenar las opciones SIEMPRE si están vacías
+  if (ent_hr.options.length === 0) {
+    populateTimeSelects(ent_hr, ent_min);
+    populateTimeSelects(tol_hr, tol_min);
   }
 
   try {
     const res = await fetch("/api/horarios");
-    const data = await res.json();
-    const config = data.default || {}; // Usamos solo el default
+    // Si falla la red, usamos un objeto vacío para no romper el UI
+    const data = res.ok ? await res.json() : {};
 
-    // Cargar datos
-    if (config.mañana) {
-      setPickerFrom24h(config.mañana.entrada, em_hr, em_min, em_ampm);
-      setPickerFrom24h(config.mañana.tolerancia, tm_hr, tm_min, tm_ampm);
-    }
-    if (config.tarde) {
-      setPickerFrom24h(config.tarde.entrada, et_hr, et_min, et_ampm);
-      setPickerFrom24h(config.tarde.tolerancia, tt_hr, tt_min, tt_ampm);
-    }
+    // Default fallback si no hay datos
+    const config =
+      data && data.default
+        ? data.default
+        : { entrada: "08:00", tolerancia: "08:15" };
+
+    if (config.entrada)
+      setPickerFrom24h(config.entrada, ent_hr, ent_min, ent_ampm);
+    if (config.tolerancia)
+      setPickerFrom24h(config.tolerancia, tol_hr, tol_min, tol_ampm);
   } catch (error) {
     console.error("Error cargando horarios:", error);
+    // En caso de error crítico, setear valores visuales por defecto
+    setPickerFrom24h("08:00", ent_hr, ent_min, ent_ampm);
+    setPickerFrom24h("08:15", tol_hr, tol_min, tol_ampm);
   }
 }
 
-// Guardar Horarios
+// Listener del formulario de horarios
 const formHorarios = document.getElementById("form-horarios");
 if (formHorarios) {
   formHorarios.onsubmit = async function (e) {
     e.preventDefault();
     const payload = {
-      ciclo: "default", // Siempre guardamos en default
-      horarios: {
-        mañana: {
-          entrada: get24hFromPicker(
-            "entrada-manana-hr",
-            "entrada-manana-min",
-            "entrada-manana-ampm"
-          ),
-          tolerancia: get24hFromPicker(
-            "tolerancia-manana-hr",
-            "tolerancia-manana-min",
-            "tolerancia-manana-ampm"
-          ),
-        },
-        tarde: {
-          entrada: get24hFromPicker(
-            "entrada-tarde-hr",
-            "entrada-tarde-min",
-            "entrada-tarde-ampm"
-          ),
-          tolerancia: get24hFromPicker(
-            "tolerancia-tarde-hr",
-            "tolerancia-tarde-min",
-            "tolerancia-tarde-ampm"
-          ),
-        },
+      default: {
+        entrada: get24hFromPicker("entrada-hr", "entrada-min", "entrada-ampm"),
+        tolerancia: get24hFromPicker(
+          "tolerancia-hr",
+          "tolerancia-min",
+          "tolerancia-ampm"
+        ),
       },
     };
 
@@ -166,10 +181,7 @@ if (formHorarios) {
       });
       const data = await res.json();
       if (data.exito || res.ok)
-        showGlobalMessage(
-          "msg-horarios",
-          "Horarios actualizados correctamente."
-        );
+        showGlobalMessage("msg-horarios", "Horario general guardado.");
       else
         showGlobalMessage(
           "msg-horarios",
@@ -182,7 +194,7 @@ if (formHorarios) {
   };
 }
 
-// Navegación
+// --- EVENTOS DE BOTONES (NAVEGACIÓN) ---
 document.getElementById("btn-vista-inicio").onclick = () =>
   mostrarVista("vista-principal", "btn-vista-inicio");
 document.getElementById("btn-vista-usuarios").onclick = () =>
@@ -190,7 +202,7 @@ document.getElementById("btn-vista-usuarios").onclick = () =>
 document.getElementById("btn-vista-whatsapp").onclick = () =>
   mostrarVista("vista-whatsapp", "btn-vista-whatsapp");
 
-// Agregar Docente
+// --- FORMULARIO AGREGAR DOCENTE ---
 const formAgregar = document.getElementById("form-agregar");
 if (formAgregar) {
   formAgregar.onsubmit = async function (e) {
@@ -199,15 +211,26 @@ if (formAgregar) {
     const nombre = document.getElementById("nombre").value.trim();
     const apellido = document.getElementById("apellido").value.trim();
     const rol = "docente";
+
     const diasAsistencia = [];
     document
       .querySelectorAll("#dias-asistencia-selector .day-btn.active")
-      .forEach((btn) => diasAsistencia.push(btn.getAttribute("data-day")));
+      .forEach((btn) => {
+        diasAsistencia.push(btn.getAttribute("data-day"));
+      });
 
-    if (!codigo || !nombre || !apellido || diasAsistencia.length === 0) {
+    if (!codigo || !nombre || !apellido) {
       showGlobalMessage(
         "msg-agregar-usuario",
-        "Todos los campos son obligatorios",
+        "Faltan datos obligatorios.",
+        true
+      );
+      return;
+    }
+    if (diasAsistencia.length === 0) {
+      showGlobalMessage(
+        "msg-agregar-usuario",
+        "Selecciona días de asistencia.",
         true
       );
       return;
@@ -227,8 +250,17 @@ if (formAgregar) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.mensaje);
+
       showGlobalMessage("msg-agregar-usuario", data.mensaje);
       this.reset();
+
+      // Restaurar días activos por defecto (L-S) si se desea, o dejar limpio
+      document
+        .querySelectorAll("#dias-asistencia-selector .day-btn")
+        .forEach((btn) => {
+          if (btn.dataset.day !== "D") btn.classList.add("active");
+        });
+
       await cargarUsuarios(true);
     } catch (error) {
       showGlobalMessage("msg-agregar-usuario", error.message, true);
@@ -236,7 +268,7 @@ if (formAgregar) {
   };
 }
 
-// Editar Docente
+// --- FORMULARIO EDITAR DOCENTE ---
 const formEditar = document.getElementById("form-editar");
 if (formEditar) {
   formEditar.onsubmit = async function (e) {
@@ -252,7 +284,9 @@ if (formEditar) {
     const dias = [];
     document
       .querySelectorAll("#edit-dias-asistencia-selector .day-btn.active")
-      .forEach((btn) => dias.push(btn.getAttribute("data-day")));
+      .forEach((btn) => {
+        dias.push(btn.getAttribute("data-day"));
+      });
 
     try {
       const res = await fetch(`/api/usuarios/${original}`, {
@@ -268,6 +302,7 @@ if (formEditar) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.mensaje);
+
       showGlobalMessage("msg-editar-usuario", data.mensaje);
       document.getElementById("edit-user-modal").style.display = "none";
       await cargarUsuarios(true);
@@ -277,17 +312,24 @@ if (formEditar) {
   };
 }
 
-// Justificar
+// --- FORMULARIO JUSTIFICAR ---
 const formJustificar = document.getElementById("form-justificar-falta");
 if (formJustificar) {
   formJustificar.onsubmit = async function (e) {
     e.preventDefault();
     const codigo = document.getElementById("justificar-alumno-hidden").value;
     const fecha = document.getElementById("justificar-fecha").value;
-    if (!codigo || !fecha)
-      return showGlobalMessage("msg-justificar-falta", "Faltan datos", true);
+    const filtroInput = document.getElementById("justificar-usuario-filtro");
 
-    // Formato DD-MM-YYYY
+    if (!codigo || !fecha) {
+      return showGlobalMessage(
+        "msg-justificar-falta",
+        "Faltan datos (fecha o docente).",
+        true
+      );
+    }
+
+    // Formato fecha input (YYYY-MM-DD) a backend (DD-MM-YYYY)
     const parts = fecha.split("-");
     const fechaFmt = `${parts[2]}-${parts[1]}-${parts[0]}`;
 
@@ -299,8 +341,9 @@ if (formJustificar) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.mensaje);
+
       showGlobalMessage("msg-justificar-falta", data.mensaje);
-      document.getElementById("justificar-usuario-filtro").value = "";
+      filtroInput.value = "";
       document.getElementById("justificar-alumno-hidden").value = "";
     } catch (e) {
       showGlobalMessage("msg-justificar-falta", e.message, true);
@@ -308,7 +351,13 @@ if (formJustificar) {
   };
 }
 
-// Acceso
+// --- BOTÓN LOGOUT ---
+document.getElementById("btn-logout").onclick = async () => {
+  await fetch("/admin/logout", { method: "POST" });
+  window.location.href = "/admin";
+};
+
+// --- CAMBIO CONTRASEÑA ---
 document.getElementById("form-password").onsubmit = async function (e) {
   e.preventDefault();
   const nueva = document.getElementById("nueva-password").value;
@@ -328,23 +377,45 @@ document.getElementById("form-password").onsubmit = async function (e) {
   }
 };
 
-document.getElementById("btn-logout").onclick = async () => {
-  await fetch("/admin/logout", { method: "POST" });
-  window.location.href = "/admin";
-};
-
-// Init
+// --- INICIALIZACIÓN (WINDOW.ONLOAD) ---
 window.onload = async function () {
-  initModalEvents();
-  await cargarHorarios(); // Cargar al inicio
-  await cargarUsuarios();
-  await cargarArchivosExcel();
-  initUserFormEvents();
-  mostrarVista("vista-principal", "btn-vista-inicio");
+  console.log("Admin Panel Inicializando...");
 
-  // Fecha hoy en justificar
-  const d = new Date();
-  const dateStr = d.toISOString().split("T")[0];
-  const dateIn = document.getElementById("justificar-fecha");
-  if (dateIn) dateIn.value = dateStr;
+  // 1. Establecer fecha de hoy en 'Justificar' (Al principio para que no falle si la red falla)
+  try {
+    const dateInput = document.getElementById("justificar-fecha");
+    if (dateInput) {
+      const today = new Date();
+      // Ajuste simple para zona horaria local (Perú/Sistema)
+      // toLocaleDateString('en-CA') devuelve formato YYYY-MM-DD
+      const localISODate = today.toLocaleDateString("en-CA");
+      dateInput.value = localISODate;
+    }
+  } catch (e) {
+    console.error("Error seteando fecha:", e);
+  }
+
+  // 2. Inicializar eventos UI
+  initModalEvents();
+  initUserFormEvents();
+
+  // 3. Cargar datos iniciales (Protegido con try/catch individual)
+  try {
+    await cargarHorarios();
+  } catch (e) {
+    console.error("Fallo cargarHorarios", e);
+  }
+  try {
+    await cargarUsuarios();
+  } catch (e) {
+    console.error("Fallo cargarUsuarios", e);
+  }
+  try {
+    await cargarArchivosExcel();
+  } catch (e) {
+    console.error("Fallo cargarArchivosExcel", e);
+  }
+
+  // 4. Mostrar vista por defecto
+  mostrarVista("vista-principal", "btn-vista-inicio");
 };

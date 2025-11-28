@@ -1,4 +1,6 @@
-// Public/js/admin/whatsapp/wa-dom.js (LIMPIO)
+// Public/js/admin/whatsapp/wa-dom.js
+
+// Estado
 export const statusIndicator = document.getElementById(
   "whatsapp-status-indicator"
 );
@@ -7,6 +9,7 @@ export const refreshStatusBtn = document.getElementById(
   "btn-refresh-whatsapp-status"
 );
 
+// Toggles
 export const enabledGeneralToggle = document.getElementById(
   "whatsapp-enabled-general"
 );
@@ -23,7 +26,7 @@ export const reportEnabledToggle = document.getElementById(
   "report-enabled-toggle"
 );
 
-// Configurar Docentes
+// Configuración Docentes (Inputs)
 export const teacherTargetTypeSelect = document.getElementById(
   "teacher-target-type"
 );
@@ -44,7 +47,7 @@ export const teacherNumberInputEl = document.getElementById(
   "teacher-number-input"
 );
 
-// Reportes
+// Configuración Reportes (Inputs)
 export const reportRulesListDiv = document.getElementById("report-rules-list");
 export const reportRuleGroupFiltro = document.getElementById(
   "report-rule-group-filtro"
@@ -58,7 +61,7 @@ export const reportRuleGroupResultados = document.getElementById(
 export const btnAddReportRule = document.getElementById("btn-add-report-rule");
 export const msgAddReportRule = document.getElementById("msg-add-report-rule");
 
-// General
+// General / Botones
 export const saveConfigBtn = document.getElementById(
   "btn-save-whatsapp-config"
 );
@@ -66,6 +69,8 @@ export const msgWhatsappConfig = document.getElementById("msg-whatsapp-config");
 export const unsavedAlert = document.getElementById("unsaved-changes-alert");
 export const jumpToSaveBtn = document.getElementById("btn-jump-to-save");
 export const saveSection = document.getElementById("whatsapp-save-section");
+
+// Contenedores QR y Config
 export const configContent = document.getElementById("whatsapp-config-content");
 export const qrContainer = document.getElementById("whatsapp-qr-container");
 export const qrCanvas = document.getElementById("whatsapp-qr-canvas");
@@ -74,7 +79,3 @@ export const forceRestartBtn = document.getElementById(
   "btn-force-whatsapp-restart"
 );
 export const msgForceRestart = document.getElementById("msg-force-restart");
-// Dummies (para evitar errores si algún script antiguo los llama)
-export const studentNotificationsToggle = document.getElementById(
-  "student-notifications-toggle"
-);

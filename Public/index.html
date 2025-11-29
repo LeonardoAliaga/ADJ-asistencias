@@ -2,449 +2,80 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Administrar Docentes</title>
-    <link rel="stylesheet" href="../css/admin.css" />
-    <link rel="stylesheet" href="../css/admin-forms.css" />
-    <link rel="stylesheet" href="../css/admin-views.css" />
-    <link rel="stylesheet" href="../css/admin-whatsapp.css" />
-    <link rel="stylesheet" href="../css/admin-whatsapp-rules.css" />
-    <link rel="stylesheet" href="../css/admin-responsive.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="img/Logo 1x1 b&w.jpg" type="image/x-icon" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/index-responsive.css" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     />
+    <title>Asistencia Docentes</title>
   </head>
   <body>
-    <nav class="navbar">
-      <div class="logo-ingemat">
-        <a href="/"><img src="../img/Logo 1x4 b&w.svg" alt="Logo" /></a>
-      </div>
-      <div class="nav-links">
-        <button class="nav-button active" id="btn-vista-inicio">
-          <i class="bi bi-house-door-fill"></i> INICIO
-        </button>
-        <button class="nav-button" id="btn-vista-usuarios">
-          <i class="bi bi-person-badge-fill"></i> DOCENTES
-        </button>
-        <button class="nav-button" id="btn-vista-whatsapp">
-          <i class="bi bi-whatsapp"></i> WHATSAPP
-        </button>
-        <button id="btn-logout" title="Cerrar Sesión">
-          <i class="bi bi-box-arrow-right"></i>
-        </button>
-      </div>
+    <nav class="navbar" id="navbar">
+      <a href="#"
+        ><img src="img/Logo 1x4 b&w.svg" alt="Logo" id="navbar-logo"
+      /></a>
+      <ul>
+        <li><a href="/admin">Panel Admin</a></li>
+      </ul>
     </nav>
 
-    <div class="container">
-      <div class="hero-header">
-        <h1>PANEL DE CONTROL - DOCENTES</h1>
-      </div>
+    <header>
+      <div class="box-header">
+        <div class="text-header">
+          <span>Sistema de Control</span>
+          <h1>ASISTENCIA<br />DOCENTE</h1>
 
-      <div id="vista-principal" class="vista-content">
-        <div class="admin-grid">
-          <section id="horarios-section">
-            <h2><i class="bi bi-clock-fill"></i> HORARIO GENERAL</h2>
-            <p
+          <div
+            class="registro-container"
+            style="margin-top: 2rem; width: 100%; max-width: 400px"
+          >
+            <div
+              id="resultado"
               style="
-                text-align: center;
-                color: #666;
-                font-size: 0.9rem;
                 margin-bottom: 15px;
+                font-size: 1.2rem;
+                min-height: 1.5em;
+                font-weight: bold;
               "
-            >
-              Configure la hora de entrada única para todos los docentes.
-            </p>
+            ></div>
 
-            <form id="form-horarios">
-              <div
-                style="
-                  display: flex;
-                  gap: 20px;
-                  flex-wrap: wrap;
-                  justify-content: center;
-                "
-              >
-                <div class="time-picker-group">
-                  <label>Hora de Entrada:</label>
-                  <div class="time-picker-inputs">
-                    <select id="entrada-hr"></select
-                    ><span>:</span>
-                    <select id="entrada-min"></select>
-                    <select id="entrada-ampm">
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="time-picker-group">
-                  <label>Tolerancia hasta:</label>
-                  <div class="time-picker-inputs">
-                    <select id="tolerancia-hr"></select
-                    ><span>:</span>
-                    <select id="tolerancia-min"></select>
-                    <select id="tolerancia-ampm">
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+            <input
+              type="text"
+              id="codigo"
+              placeholder="Ingrese su DNI o Código"
+              autocomplete="off"
+              style="
+                width: 100%;
+                padding: 15px;
+                font-size: 1.2rem;
+                border-radius: 8px;
+                border: 2px solid #ddd;
+                text-align: center;
+                text-transform: uppercase;
+                margin-bottom: 10px;
+              "
+            />
 
-              <button type="submit" style="width: 100%; margin-top: 20px">
-                <i class="bi bi-save-fill"></i> GUARDAR HORARIO
-              </button>
-            </form>
-            <div id="msg-horarios"></div>
-          </section>
-
-          <section id="agregar-usuario-section">
-            <h2><i class="bi bi-person-plus-fill"></i> AGREGAR DOCENTE</h2>
-            <form id="form-agregar">
-              <input
-                type="text"
-                id="codigo"
-                placeholder="Código / DNI"
-                required
-                style="text-transform: uppercase"
-              />
-              <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                <input
-                  type="text"
-                  id="nombre"
-                  placeholder="Nombre"
-                  required
-                  style="flex: 1"
-                />
-                <input
-                  type="text"
-                  id="apellido"
-                  placeholder="Apellido"
-                  required
-                  style="flex: 1"
-                />
-              </div>
-              <input type="hidden" id="rol" value="docente" />
-
-              <div id="dias-asistencia-selector">
-                <label>Días de Asistencia:</label>
-                <div class="day-buttons-container">
-                  <button type="button" class="day-btn active" data-day="L">
-                    L
-                  </button>
-                  <button type="button" class="day-btn active" data-day="M">
-                    M
-                  </button>
-                  <button type="button" class="day-btn active" data-day="MI">
-                    Mi
-                  </button>
-                  <button type="button" class="day-btn active" data-day="J">
-                    J
-                  </button>
-                  <button type="button" class="day-btn active" data-day="V">
-                    V
-                  </button>
-                  <button type="button" class="day-btn active" data-day="S">
-                    S
-                  </button>
-                  <button type="button" class="day-btn" data-day="D">D</button>
-                </div>
-              </div>
-              <button type="submit">
-                <i class="bi bi-check-lg"></i> AGREGAR
-              </button>
-              <div id="msg-agregar-usuario"></div>
-            </form>
-          </section>
-
-          <section id="archivos-excel-section">
-            <h2>
-              <i class="bi bi-file-earmark-excel-fill"></i> REPORTES EXCEL
-            </h2>
-            <div id="archivos-excel"></div>
-          </section>
-
-          <section id="justificar-falta-section">
-            <h2><i class="bi bi-patch-check-fill"></i> JUSTIFICAR FALTA</h2>
-            <form id="form-justificar-falta">
-              <label>Fecha:</label>
-              <input type="date" id="justificar-fecha" required />
-              <div class="autocomplete-container">
-                <label>Docente:</label>
-                <input
-                  type="text"
-                  id="justificar-usuario-filtro"
-                  placeholder="Buscar nombre..."
-                  autocomplete="off"
-                />
-                <input type="hidden" id="justificar-alumno-hidden" required />
-                <div
-                  class="autocomplete-items"
-                  id="justificar-resultados"
-                ></div>
-              </div>
-              <button type="submit">
-                <i class="bi bi-check-lg"></i> JUSTIFICAR
-              </button>
-            </form>
-            <div id="msg-justificar-falta" class="form-message"></div>
-          </section>
-
-          <section id="gestion-acceso-section">
-            <h2><i class="bi bi-key-fill"></i> CONTRASEÑA</h2>
-            <form id="form-password">
-              <input
-                type="password"
-                id="nueva-password"
-                placeholder="Nueva contraseña"
-                required
-              />
-              <button type="submit">
-                <i class="bi bi-pencil-square"></i> CAMBIAR
-              </button>
-            </form>
-            <div id="msg-password"></div>
-          </section>
-        </div>
-      </div>
-
-      <div
-        id="vista-usuarios-completa"
-        class="vista-content"
-        style="display: none"
-      >
-        <h2 class="sub-header">
-          <i class="bi bi-card-list"></i> LISTA DE DOCENTES
-        </h2>
-        <div id="vista-usuarios-list"></div>
-      </div>
-
-      <div id="vista-whatsapp" class="vista-content" style="display: none">
-        <h2 class="sub-header">
-          <i class="bi bi-whatsapp"></i> CONFIGURACIÓN WHATSAPP
-        </h2>
-
-        <div
-          id="whatsapp-qr-container"
-          style="display: none; text-align: center; padding: 20px"
-        >
-          <h3>Escanea el QR</h3>
-          <p id="whatsapp-qr-message" style="margin-bottom: 15px; color: #555">
-            Cargando cliente de WhatsApp...
-          </p>
-          <canvas
-            id="whatsapp-qr-canvas"
-            style="
-              display: none;
-              margin: 0 auto;
-              border: 1px solid #ddd;
-              border-radius: 8px;
-            "
-          ></canvas>
-
-          <div
-            style="
-              margin-top: 20px;
-              border-top: 1px solid #eee;
-              padding-top: 20px;
-            "
-          >
             <button
-              id="btn-force-whatsapp-restart"
-              class="btn-delete-rule"
-              style="background-color: #ffc107; color: #333"
+              id="registrar-btn"
+              class="btn-red"
+              style="width: 100%; margin: 0"
             >
-              Forzar Reinicio de Sesión
+              MARCAR ASISTENCIA
             </button>
-            <div id="msg-force-restart" class="form-message"></div>
-          </div>
-        </div>
-
-        <div id="whatsapp-config-content" style="display: none">
-          <div
-            id="unsaved-changes-alert"
-            class="unsaved-alert sticky"
-            style="display: none"
-          >
-            <i class="bi bi-exclamation-triangle-fill"></i> Cambios sin guardar
-            <button id="btn-jump-to-save">
-              <i class="bi bi-arrow-down-circle"></i>
-            </button>
-          </div>
-
-          <div class="whatsapp-status-section">
-            <h3>Estado: <span id="whatsapp-status-indicator">...</span></h3>
-            <p id="whatsapp-status-message"></p>
-            <button id="btn-refresh-whatsapp-status">
-              <i class="bi bi-arrow-clockwise"></i>
-            </button>
-          </div>
-
-          <section class="whatsapp-config-section">
-            <h3><i class="bi bi-toggles"></i> Activación</h3>
-            <div class="toggle-switch-container master-toggle">
-              <label class="switch"
-                ><input type="checkbox" id="whatsapp-enabled-general" /><span
-                  class="slider round"
-                ></span
-              ></label>
-              <span>General</span>
-            </div>
-            <div class="toggle-switch-container">
-              <label class="switch"
-                ><input
-                  type="checkbox"
-                  id="teacher-notifications-toggle" /><span
-                  class="slider round"
-                ></span
-              ></label>
-              <span>Notif. Docentes (Entrada)</span>
-            </div>
-            <input
-              type="checkbox"
-              id="student-notifications-toggle"
-              style="display: none"
-            />
-            <input
-              type="checkbox"
-              id="report-enabled-toggle"
-              checked
-              style="display: none"
-            />
-          </section>
-
-          <section class="whatsapp-config-section">
-            <h3>
-              <i class="bi bi-person-badge-fill"></i> Destino Notif. Docentes
-            </h3>
-            <div class="form-grid-whatsapp">
-              <select id="teacher-target-type">
-                <option value="number">A Número</option>
-                <option value="group">A Grupo</option>
-              </select>
-              <div
-                id="teacher-group-field"
-                class="autocomplete-container"
-                style="display: none"
-              >
-                <input
-                  type="text"
-                  id="teacher-group-filtro"
-                  placeholder="Buscar grupo..."
-                />
-                <input type="hidden" id="teacher-group-hidden" />
-                <div
-                  class="autocomplete-items"
-                  id="teacher-group-resultados"
-                ></div>
-              </div>
-              <div id="teacher-number-field">
-                <input
-                  type="tel"
-                  id="teacher-number-input"
-                  placeholder="519..."
-                />
-              </div>
-            </div>
-          </section>
-
-          <section class="whatsapp-config-section">
-            <h3><i class="bi bi-images"></i> Reporte Manual</h3>
-            <div id="report-rules-list"></div>
-            <div class="add-rule-form">
-              <h5>Agregar Destino para Reporte</h5>
-              <input type="hidden" id="report-rule-ciclo" value="DOCENTES" />
-              <input type="hidden" id="report-rule-turno" value="docentes" />
-              <div id="report-rule-group-field" class="autocomplete-container">
-                <input
-                  type="text"
-                  id="report-rule-group-filtro"
-                  placeholder="Buscar grupo WhatsApp..."
-                />
-                <input type="hidden" id="report-rule-group-hidden" />
-                <div
-                  class="autocomplete-items"
-                  id="report-rule-resultados"
-                ></div>
-              </div>
-              <button id="btn-add-report-rule">
-                <i class="bi bi-plus"></i> Agregar
-              </button>
-              <div id="msg-add-report-rule" class="form-message"></div>
-            </div>
-          </section>
-
-          <div class="whatsapp-save-section">
-            <button id="btn-save-whatsapp-config">
-              <i class="bi bi-save-fill"></i> GUARDAR CONFIG
-            </button>
-            <div id="msg-whatsapp-config" class="form-message"></div>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div id="preview-modal" class="modal">
-      <div class="modal-content">
-        <span class="close-btn" id="close-preview">&times;</span>
-        <h3 id="preview-filename"></h3>
-        <div id="preview-tabs" class="preview-tab-container"></div>
-        <div id="preview-content" class="preview-content-area"></div>
-      </div>
-    </div>
+    <footer class="footer">
+      <div class="footer-bottom">© 2024. Todos los derechos reservados.</div>
+    </footer>
 
-    <div id="edit-user-modal" class="modal">
-      <div class="modal-content" style="max-width: 600px">
-        <span class="close-btn" id="close-edit-modal">&times;</span>
-        <h2>EDITAR DOCENTE</h2>
-        <form id="form-editar">
-          <input type="hidden" id="edit-original-codigo" />
-          <input
-            type="text"
-            id="edit-codigo"
-            placeholder="Código"
-            required
-            style="text-transform: uppercase"
-          />
-          <div style="display: flex; gap: 8px">
-            <input
-              type="text"
-              id="edit-nombre"
-              placeholder="Nombre"
-              required
-              style="flex: 1"
-            />
-            <input
-              type="text"
-              id="edit-apellido"
-              placeholder="Apellido"
-              required
-              style="flex: 1"
-            />
-          </div>
-          <input type="hidden" id="edit-rol" value="docente" />
-          <input type="hidden" id="edit-turno" value="" />
-          <input type="hidden" id="edit-ciclo" value="" />
-
-          <div id="edit-dias-asistencia-selector">
-            <label>Días:</label>
-            <div class="day-buttons-container">
-              <button type="button" class="day-btn" data-day="L">L</button>
-              <button type="button" class="day-btn" data-day="M">M</button>
-              <button type="button" class="day-btn" data-day="MI">Mi</button>
-              <button type="button" class="day-btn" data-day="J">J</button>
-              <button type="button" class="day-btn" data-day="V">V</button>
-              <button type="button" class="day-btn" data-day="S">S</button>
-              <button type="button" class="day-btn" data-day="D">D</button>
-            </div>
-          </div>
-          <button type="submit">
-            <i class="bi bi-save-fill"></i> GUARDAR CAMBIOS
-          </button>
-          <div id="msg-editar-usuario" class="form-message"></div>
-        </form>
-      </div>
-    </div>
-
-    <script type="module" src="../js/admin.js"></script>
+    <script src="js/asistencias.js"></script>
+    <script src="js/navbar.js"></script>
   </body>
 </html>

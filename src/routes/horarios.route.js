@@ -2,6 +2,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { obtainingHorarios, getLogHeader } = require("../utils/helpers");
 const { obtenerHorarios } = require("../utils/helpers");
 
 const router = express.Router();

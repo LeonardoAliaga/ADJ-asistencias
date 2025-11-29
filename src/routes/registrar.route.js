@@ -2,12 +2,13 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const color = require("ansi-colors");
 const { guardarRegistro } = require("../services/excel.service");
 const {
   estadoAsistencia,
-  getDayAbbreviation,
   convertTo12Hour,
   getFullName,
+  getLogHeader,
 } = require("../utils/helpers");
 const {
   sendMessage,
@@ -20,15 +21,13 @@ const whatsappConfigPath = path.join(
   __dirname,
   "../../data/whatsappConfig.json"
 );
+const FILE_TAG = "registrar.route.js";
 
 const readWhatsappConfig = () => {
   try {
-    if (fs.existsSync(whatsappConfigPath)) {
+    if (fs.existsSync(whatsappConfigPath))
       return JSON.parse(fs.readFileSync(whatsappConfigPath, "utf8"));
-    }
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) {}
   return { enabledGeneral: false };
 };
 
@@ -42,13 +41,17 @@ router.post("/", async (req, res) => {
     codigo = codigo.substring(0, codigo.length - 1);
   }
 
+  console.log(
+    `${getLogHeader(FILE_TAG)} Registro: ${codigo} ${
+      isJustified ? "(Justificado)" : ""
+    }`
+  );
+
   let usuarios = [];
   try {
     usuarios = JSON.parse(fs.readFileSync(usuariosPath, "utf8"));
   } catch (err) {
-    return res
-      .status(500)
-      .json({ exito: false, mensaje: "Error leyendo usuarios." });
+    return res.status(500).json({ exito: false, mensaje: "Error usuarios." });
   }
 
   const usuario = usuarios.find((u) => u.codigo === codigo);
@@ -70,25 +73,38 @@ router.post("/", async (req, res) => {
     hour12: false,
   });
 
-  // Estado calculado con horario general
-  const estado = estadoAsistencia(null, null, horaStr);
+  // 1. Calcular estado inicial por hora
+  let estado = estadoAsistencia(null, null, horaStr);
+
+  // 2. CORRECCIÓN: Si está justificado manualmente, sobrescribimos el estado "tarde"
+  if (isJustified) {
+    estado = "tardanza_justificada"; // Esto activará el color naranja en el log y excel updater
+  }
 
   const guardado = await guardarRegistro(
     usuario,
     fechaStr,
     horaStr,
-    isJustified
+    isJustified,
+    estado
   );
+
   if (!guardado) {
     return res
       .status(409)
       .json({ exito: false, mensaje: "Ya registrado hoy." });
   }
 
+  // Log correcto con el estado final
+  console.log(
+    `${getLogHeader(FILE_TAG)} ${color.green("Registrado:")} ${getFullName(
+      usuario
+    )} [${estado}]`
+  );
+
   let hora12h = convertTo12Hour(horaStr);
   if (isJustified) hora12h += " (J)";
 
-  // WhatsApp
   const waConfig = readWhatsappConfig();
   if (
     waConfig.enabledGeneral &&
@@ -97,7 +113,8 @@ router.post("/", async (req, res) => {
   ) {
     let emoji = "✅";
     if (estado === "tarde") emoji = "❌";
-    else if (estado === "tolerancia") emoji = "⚠️";
+    else if (estado === "tolerancia" || estado === "tardanza_justificada")
+      emoji = "⚠️";
 
     const target = waConfig.teacherTargetId;
     if (target) {
@@ -114,7 +131,6 @@ router.post("/", async (req, res) => {
     hora: hora12h,
     rol: "docente",
     estado: estado,
-    ciclo: "",
   });
 });
 

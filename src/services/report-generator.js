@@ -1,4 +1,4 @@
-// src/services/report-generator.js (LIMPIO)
+// src/services/report-generator.js
 const { createCanvas, registerFont } = require("canvas");
 const path = require("path");
 const fs = require("fs");
@@ -6,13 +6,14 @@ const ExcelJS = require("exceljs");
 const {
   estiloFalta,
   estiloNoAsiste,
-  estiloDocenteRegistrado,
+  estiloPuntual,
+  estiloOrange,
+  estiloTarde,
   estiloFaltaJustificada,
   fillEncabezadoDocente,
   estiloEncabezadoBase,
 } = require("./excel/excel.constants.js");
 
-// Fuentes
 try {
   registerFont(
     path.join(__dirname, "../../Public/fonts/ZTGatha-SemiBold.otf"),
@@ -21,36 +22,41 @@ try {
   registerFont(path.join(__dirname, "../../Public/fonts/coolvetica rg.otf"), {
     family: "Coolvetica",
   });
-} catch (err) {
-  console.warn("Report-Generator: Fuentes no cargadas.", err.message);
-}
+} catch (err) {}
 
-// Mapa de estilos visuales para el Canvas
+// Colores para canvas (Hex sin #)
+const getHex = (argb) => "#" + argb.substring(2);
+
 const styles = {
-  docente: {
-    bg: "#" + estiloDocenteRegistrado.fill.fgColor.argb.substring(2),
-    text:
-      "#" +
-      (estiloDocenteRegistrado.font.color
-        ? estiloDocenteRegistrado.font.color.argb.substring(2)
-        : "000000"),
+  puntual: {
+    bg: getHex(estiloPuntual.fill.fgColor.argb),
+    text: getHex(estiloPuntual.font.color.argb),
+  },
+  tolerancia: {
+    bg: getHex(estiloOrange.fill.fgColor.argb),
+    text: getHex(estiloOrange.font.color.argb),
+  },
+  tarde: {
+    bg: getHex(estiloTarde.fill.fgColor.argb),
+    text: getHex(estiloTarde.font.color.argb),
   },
   falta: {
-    bg: "#" + estiloFalta.fill.fgColor.argb.substring(2),
-    text: "#" + estiloFalta.font.color.argb.substring(2),
-  },
-  no_asiste: {
-    bg: "#" + estiloNoAsiste.fill.fgColor.argb.substring(2),
-    text: "#" + estiloNoAsiste.font.color.argb.substring(2),
+    bg: getHex(estiloFalta.fill.fgColor.argb),
+    text: getHex(estiloFalta.font.color.argb),
   },
   falta_justificada: {
-    bg: "#" + estiloFaltaJustificada.fill.fgColor.argb.substring(2),
-    text: "#" + estiloFaltaJustificada.font.color.argb.substring(2),
+    bg: getHex(estiloFaltaJustificada.fill.fgColor.argb),
+    text: getHex(estiloFaltaJustificada.font.color.argb),
   },
-  registrado: { bg: "#E7E6E6", text: "#000000" }, // Fallback
+  no_asiste: {
+    bg: getHex(estiloNoAsiste.fill.fgColor.argb),
+    text: getHex(estiloNoAsiste.font.color.argb),
+  },
+  registrado: { bg: "#E7E6E6", text: "#000000" },
+
   header: {
-    bg: "#" + fillEncabezadoDocente.fgColor.argb.substring(2),
-    text: "#" + estiloEncabezadoBase.font.color.argb.substring(2),
+    bg: getHex(fillEncabezadoDocente.fgColor.argb),
+    text: getHex(estiloEncabezadoBase.font.color.argb),
   },
   base: { bg: "#FFFFFF", text: "#000000" },
   title: { text: "#000000", font: "bold 20px Gatha, sans-serif" },
@@ -62,67 +68,57 @@ const ROW_HEIGHT = 30;
 const TITLE_HEIGHT = 40;
 const HEADER_HEIGHT = 35;
 const PADDING = 10;
-const COL_WIDTHS = [40, 300, 90, 150, 100];
+// Anchos 3 columnas: N°(40), Docente(350), Hora(150)
+const COL_WIDTHS = [40, 350, 150];
 const TOTAL_WIDTH = COL_WIDTHS.reduce((a, b) => a + b, 0) + PADDING * 2;
 const registrosPath = path.join(__dirname, "../../Registros");
 
 // Mapa de colores Excel -> Estado interno
 const colorMap = {
-  [estiloFalta.fill.fgColor.argb]: "falta",
-  [estiloNoAsiste.fill.fgColor.argb]: "no_asiste",
-  [estiloDocenteRegistrado.fill.fgColor.argb]: "docente",
+  [estiloPuntual.fill.fgColor.argb]: "puntual",
+  [estiloOrange.fill.fgColor.argb]: "tolerancia",
+  [estiloTarde.fill.fgColor.argb]: "tarde",
   [estiloFaltaJustificada.fill.fgColor.argb]: "falta_justificada",
+  [estiloFalta.fill.fgColor.argb]: "falta",
 };
 
 async function getExcelData(fileName) {
   const ruta = path.join(registrosPath, fileName);
-  if (!fs.existsSync(ruta))
-    throw new Error(`Archivo no encontrado: ${fileName}`);
+  if (!fs.existsSync(ruta)) return [];
 
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(ruta);
   const allSheetsData = [];
 
   workbook.eachSheet((worksheet) => {
-    // Solo procesar si es hoja de Docentes
     if (worksheet.name !== "Docentes") return;
-
     let currentSection = null;
-    worksheet.eachRow({ includeEmpty: false }, (row) => {
-      const cellA = row.getCell(1);
-      let cellAValue = cellA.value?.toString() || "";
 
-      if (cellA.isMerged && cellAValue.startsWith("REGISTRO DE ASISTENCIA")) {
-        currentSection = {
-          title: cellAValue,
-          headers: [],
-          rows: [],
-        };
+    worksheet.eachRow({ includeEmpty: false }, (row) => {
+      const cellA = row.getCell(1).value?.toString() || "";
+
+      if (cellA.startsWith("REGISTRO")) {
+        currentSection = { title: cellA, headers: [], rows: [] };
         allSheetsData.push(currentSection);
-      } else if (cellAValue.includes("N°") && currentSection) {
+      } else if (cellA.includes("N°") && currentSection) {
+        // Headers: [N, Docente, Fecha]
         currentSection.headers = [
           row.getCell(1).value,
           row.getCell(2).value,
           row.getCell(3).value,
-          row.getCell(4).value,
-          row.getCell(5).value,
-        ].map((h) => h?.toString() || "");
-      } else if (
-        !isNaN(parseInt(cellAValue)) &&
-        currentSection &&
-        row.getCell(2).value
-      ) {
-        // Procesar fila de datos
+        ].map(String);
+      } else if (!isNaN(parseInt(cellA)) && currentSection) {
+        // Datos
         let nombre = row.getCell(2).value;
         if (typeof nombre === "object" && nombre.richText)
           nombre = nombre.richText.map((t) => t.text).join("");
 
-        const cellE = row.getCell(5);
-        let cellEValue = cellE.value;
+        const cellTime = row.getCell(3);
+        let cellTimeVal = cellTime.value;
         let status = "registrado";
 
-        if (cellEValue instanceof Date) {
-          cellEValue = cellEValue
+        if (cellTimeVal instanceof Date) {
+          cellTimeVal = cellTimeVal
             .toLocaleTimeString("es-PE", {
               hour: "2-digit",
               minute: "2-digit",
@@ -131,27 +127,24 @@ async function getExcelData(fileName) {
             .replace(/\s/g, "")
             .toUpperCase();
         } else {
-          cellEValue = cellEValue?.toString() || "";
+          cellTimeVal = cellTimeVal?.toString() || "";
         }
 
-        // Determinar estado por color
-        const cellEFill = cellE.fill;
-        if (cellEFill && cellEFill.fgColor && cellEFill.fgColor.argb) {
-          status = colorMap[cellEFill.fgColor.argb] || status;
-        }
-
-        // Fallback por texto
-        const upperVal = cellEValue.toUpperCase();
-        if (upperVal === "FALTA") status = "falta";
-        else if (upperVal === "NO ASISTE") status = "no_asiste";
-        else if (upperVal === "F. JUSTIFICADA") status = "falta_justificada";
+        // Estado por color
+        if (
+          cellTime.fill &&
+          cellTime.fill.fgColor &&
+          colorMap[cellTime.fill.fgColor.argb]
+        ) {
+          status = colorMap[cellTime.fill.fgColor.argb];
+        } else if (cellTimeVal === "FALTA") status = "falta";
+        else if (cellTimeVal === "NO ASISTE") status = "no_asiste";
+        else if (cellTimeVal === "F. JUSTIFICADA") status = "falta_justificada";
 
         currentSection.rows.push({
-          n: row.getCell(1).value?.toString() || "",
-          nombre: nombre?.toString() || "",
-          turno: row.getCell(3).value?.toString() || "",
-          dias: row.getCell(4).value?.toString() || "",
-          hora: cellEValue,
+          n: cellA,
+          nombre: String(nombre),
+          hora: cellTimeVal,
           status: status,
         });
       }
@@ -160,41 +153,27 @@ async function getExcelData(fileName) {
   return allSheetsData;
 }
 
-async function generateReportImage(cicloIgnored, turnoIgnored) {
-  // Ignoramos ciclo/turno porque solo hay un reporte de docentes
-  const today = new Date();
-  const fileName =
-    today
+async function generateReportImage(ciclo, turno) {
+  const today =
+    new Date()
       .toLocaleDateString("es-PE", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       })
       .replace(/\//g, "-") + ".xlsx";
+  const allData = await getExcelData(today);
+  if (!allData || allData.length === 0) return null;
 
-  let sectionData;
-  try {
-    const allData = await getExcelData(fileName);
-    if (allData.length > 0) sectionData = allData[0]; // Tomamos la primera sección (Docentes)
-  } catch (err) {
-    console.error(
-      `Report-Generator: Error leyendo ${fileName}: ${err.message}`
-    );
-    return null;
-  }
-
-  if (!sectionData || sectionData.rows.length === 0) {
-    console.log(`Report-Generator: No hay datos en ${fileName}.`);
-    return null;
-  }
-
+  const sectionData = allData[0];
   const { title, headers, rows } = sectionData;
+  if (rows.length === 0) return null;
+
   const totalHeight =
     TITLE_HEIGHT + HEADER_HEIGHT + rows.length * ROW_HEIGHT + PADDING * 2;
   const canvas = createCanvas(TOTAL_WIDTH, totalHeight);
   const ctx = canvas.getContext("2d");
 
-  // Fondo blanco
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, TOTAL_WIDTH, totalHeight);
 
@@ -218,13 +197,9 @@ async function generateReportImage(cicloIgnored, turnoIgnored) {
   ctx.textBaseline = "middle";
 
   for (let i = 0; i < headers.length; i++) {
-    const width = COL_WIDTHS[i];
-    ctx.fillText(
-      headers[i],
-      currentX + width / 2,
-      currentY + HEADER_HEIGHT / 2
-    );
-    currentX += width;
+    const w = COL_WIDTHS[i];
+    ctx.fillText(headers[i], currentX + w / 2, currentY + HEADER_HEIGHT / 2);
+    currentX += w;
   }
   currentY += HEADER_HEIGHT;
 
@@ -232,34 +207,29 @@ async function generateReportImage(cicloIgnored, turnoIgnored) {
   ctx.font = styles.dataFont;
   for (const row of rows) {
     currentX = PADDING;
-    const rowValues = [row.n, row.nombre, row.turno, row.dias, row.hora];
+    const rowValues = [row.n, row.nombre, row.hora];
     const statusStyle = styles[row.status] || styles.base;
 
     for (let i = 0; i < rowValues.length; i++) {
-      const width = COL_WIDTHS[i];
-      const isStatusCell = i === 4;
+      const w = COL_WIDTHS[i];
+      const isStatus = i === 2; // Columna 3 es status
 
-      ctx.fillStyle = isStatusCell ? statusStyle.bg : styles.base.bg;
-      ctx.fillRect(currentX, currentY, width, ROW_HEIGHT);
-      ctx.fillStyle = isStatusCell ? statusStyle.text : styles.base.text;
+      ctx.fillStyle = isStatus ? statusStyle.bg : styles.base.bg;
+      ctx.fillRect(currentX, currentY, w, ROW_HEIGHT);
+      ctx.fillStyle = isStatus ? statusStyle.text : styles.base.text;
 
       if (i === 1) {
-        // Nombre alineado izquierda
+        // Nombre left
         ctx.textAlign = "left";
         ctx.fillText(rowValues[i], currentX + 5, currentY + ROW_HEIGHT / 2);
       } else {
-        // Resto centrado
         ctx.textAlign = "center";
-        ctx.fillText(
-          rowValues[i],
-          currentX + width / 2,
-          currentY + ROW_HEIGHT / 2
-        );
+        ctx.fillText(rowValues[i], currentX + w / 2, currentY + ROW_HEIGHT / 2);
       }
 
       ctx.strokeStyle = "#DDDDDD";
-      ctx.strokeRect(currentX, currentY, width, ROW_HEIGHT);
-      currentX += width;
+      ctx.strokeRect(currentX, currentY, w, ROW_HEIGHT);
+      currentX += w;
     }
     currentY += ROW_HEIGHT;
   }
@@ -267,6 +237,4 @@ async function generateReportImage(cicloIgnored, turnoIgnored) {
   return canvas.toBuffer("image/png");
 }
 
-module.exports = {
-  generateReportImage,
-};
+module.exports = { generateReportImage };

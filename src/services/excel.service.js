@@ -1,8 +1,9 @@
-// src/services/excel.service.js (LIMPIO)
+// src/services/excel.service.js
 const fs = require("fs");
 const path = require("path");
 const ExcelJS = require("exceljs");
-const { getDayAbbreviation } = require("../utils/helpers.js");
+const color = require("ansi-colors");
+const { getDayAbbreviation, getLogHeader } = require("../utils/helpers.js");
 const {
   determineExcelInfo,
   setColumnWidths,
@@ -10,15 +11,17 @@ const {
 const { generateTeacherSheetStructure } = require("./excel/excel.generator.js");
 const { updateAttendanceRecord } = require("./excel/excel.updater.js");
 
+const FILE_TAG = "excel.service.js";
+
 async function guardarRegistro(
   usuario,
   fechaStr,
   horaStr,
-  isJustified = false
+  isJustified = false,
+  estado = "tarde"
 ) {
   const excelInfo = determineExcelInfo(fechaStr, usuario);
   if (!excelInfo) return false;
-
   const { filePath, sheetName } = excelInfo;
 
   try {
@@ -40,25 +43,6 @@ async function guardarRegistro(
       if (!hoja) {
         hoja = workbook.addWorksheet(sheetName);
         isNewSheet = true;
-      } else {
-        // Validación básica de columna fecha
-        const headerRow = hoja.getRow(2);
-        let colIndex = -1;
-        headerRow.eachCell((cell, colNumber) => {
-          if (
-            cell.value &&
-            cell.value.toString().toUpperCase() ===
-              nombreColumnaFecha.toUpperCase()
-          ) {
-            colIndex = colNumber;
-          }
-        });
-        if (colIndex === -1) {
-          console.error(
-            `Error: Columna ${nombreColumnaFecha} no encontrada en Excel existente.`
-          );
-          // Podrías decidir crearla aquí o retornar false
-        }
       }
     } else {
       hoja = workbook.addWorksheet(sheetName);
@@ -72,11 +56,13 @@ async function guardarRegistro(
       setColumnWidths(hoja);
     }
 
+    // PASAMOS EL ESTADO AQUÍ
     const actualizado = updateAttendanceRecord(
       hoja,
       usuario,
       horaStr,
-      isJustified
+      isJustified,
+      estado
     );
 
     if (actualizado) {
@@ -86,7 +72,7 @@ async function guardarRegistro(
       return false;
     }
   } catch (err) {
-    console.error("Error en guardarRegistro:", err);
+    console.error(`${getLogHeader(FILE_TAG)} ${color.red("Error:")}`, err);
     return false;
   }
 }

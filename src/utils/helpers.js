@@ -1,8 +1,29 @@
 // src/utils/helpers.js
 const fs = require("fs");
 const path = require("path");
+const color = require("ansi-colors");
 
 const horariosPath = path.join(__dirname, "../../data/horarios.json");
+
+// --- GENERADOR DE LOGS ESTILIZADO ---
+function getLogHeader(fileName) {
+  const d = new Date();
+  const dateStr = `${d.getDate().toString().padStart(2, "0")}/${(
+    d.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}/${d.getFullYear()}`;
+  const timeStr = `${d.getHours().toString().padStart(2, "0")}:${d
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+
+  // Formato: [DD/MM/AAAA][HORA][ARCHIVO]:
+  return `${color.cyan(`[${dateStr}]`)}${color.yellow(
+    `[${timeStr}]`
+  )}${color.magenta(`[${fileName}]`)}:`;
+}
+// ------------------------------------
 
 function obtenerHorarios() {
   try {
@@ -14,12 +35,13 @@ function obtenerHorarios() {
       return defaultHorarios;
     }
     const data = JSON.parse(fs.readFileSync(horariosPath, "utf8"));
-    if (!data.default) {
-      data.default = { entrada: "08:00", tolerancia: "08:15" };
-    }
+    if (!data.default) data.default = { entrada: "08:00", tolerancia: "08:15" };
     return data;
   } catch (error) {
-    console.error("Utils: Error horarios.json", error);
+    console.error(
+      `${getLogHeader("helpers.js")} ${color.red("Error horarios.json:")}`,
+      error
+    );
     return { default: { entrada: "08:00", tolerancia: "08:15" } };
   }
 }
@@ -50,12 +72,13 @@ function convertirAHoras(horaStr) {
   return h + m / 60;
 }
 
-// Función general para docentes (sin turno/ciclo)
 function estadoAsistencia(cicloIgnored, turnoIgnored, horaStr) {
   const horariosConfig = obtenerHorarios();
   const horaNum = convertirAHoras(horaStr);
-
-  const config = horariosConfig.default; // Siempre usa default
+  const config = horariosConfig.default || {
+    entrada: "08:00",
+    tolerancia: "08:15",
+  };
 
   const hEntrada = convertirAHoras(config.entrada);
   const hTol = convertirAHoras(config.tolerancia);
@@ -82,6 +105,7 @@ function getFullName(usuario = {}) {
 }
 
 module.exports = {
+  getLogHeader, // Exportamos para usar en todos lados
   convertirAHoras,
   estadoAsistencia,
   normalizarTexto,

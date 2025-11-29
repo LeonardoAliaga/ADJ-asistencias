@@ -1,9 +1,8 @@
-/* Public/css/admin-views.css LIMPIO */
+/* Public/css/admin-views.css */
 
 /* ======================================================= */
-/* Estilos de Listas de Usuarios (Docentes) */
+/* LISTA DE USUARIOS */
 /* ======================================================= */
-
 ul {
   list-style: none;
   padding: 0;
@@ -21,7 +20,6 @@ li {
   position: relative;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: 0.3s;
-  letter-spacing: 0.5px;
 }
 
 li:hover {
@@ -29,17 +27,27 @@ li:hover {
   border-left: 5px solid var(--red2);
 }
 
-/* Botones de acción en la lista */
+/* Botones ocultos por defecto, visibles en hover */
+.user-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .btn-eliminar,
-.btn-edit-usuario,
-.btn-barcode {
+.btn-edit-usuario {
   font-weight: bold;
   cursor: pointer;
-  padding: 0 8px;
+  padding: 0 5px;
   font-size: 1.2rem;
-  transition: color 0.3s;
-  display: none; /* Se muestran en hover vía JS/CSS padre */
+  transition: transform 0.2s;
+  display: none; /* Oculto */
   align-items: center;
+}
+
+li:hover .btn-eliminar,
+li:hover .btn-edit-usuario {
+  display: inline-block; /* Visible al pasar el mouse */
 }
 
 .btn-eliminar {
@@ -47,6 +55,7 @@ li:hover {
 }
 .btn-eliminar:hover {
   color: var(--black);
+  transform: scale(1.1);
 }
 
 .btn-edit-usuario {
@@ -54,12 +63,12 @@ li:hover {
 }
 .btn-edit-usuario:hover {
   color: #0056b3;
+  transform: scale(1.1);
 }
 
 /* ======================================================= */
-/* Estilos de Descargas Excel y Scroll */
+/* LISTA DE ARCHIVOS EXCEL */
 /* ======================================================= */
-
 #archivos-excel {
   max-height: 58rem;
   overflow-y: auto;
@@ -78,9 +87,6 @@ li:hover {
   background-color: var(--red);
   border-radius: 4px;
 }
-#archivos-excel::-webkit-scrollbar-thumb:hover {
-  background-color: var(--red2);
-}
 
 .excel-item {
   display: flex;
@@ -88,230 +94,157 @@ li:hover {
   align-items: center;
   margin: 8px 0;
   gap: 10px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-color: var(--white1);
   color: var(--black);
   padding: 10px 12px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
 }
-
 #archivos-excel a {
   display: block;
   letter-spacing: 0.4px;
   color: var(--black);
   padding: 5px 10px;
   opacity: 0.8;
-  transition: color 0.15s ease;
   text-decoration: none;
-  font-family: var(--font-body);
   flex-grow: 1;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .excel-item:hover {
   transform: translateX(4px);
   background: linear-gradient(90deg, #007109, #009d05);
 }
 .excel-item:hover a {
-  background-color: transparent;
   color: #fff !important;
   opacity: 1 !important;
 }
 
 .btn-preview {
-  background-color: transparent;
+  background: transparent;
   color: var(--black1);
   opacity: 0.8;
   border: none;
   padding: 8px 10px;
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
   flex-shrink: 0;
 }
-
 .excel-item:hover .btn-preview {
   color: #fff;
-}
-.btn-preview:hover {
   opacity: 1;
-  transform: scale(1.1);
 }
 
 /* ======================================================= */
-/* Estilos de Vista Previa de Excel (Tabla) */
+/* VISTA PREVIA (TABLA) */
 /* ======================================================= */
 .preview-content-area {
   max-height: 60vh;
   overflow-y: auto;
   border: 1px solid var(--white2);
   padding: 15px;
-  margin-top: -1px;
-  border-radius: 0 0 5px 5px;
   background-color: #fff;
-  scrollbar-width: thin;
-  scrollbar-color: var(--red) var(--white2);
 }
 
 #preview-content table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-body);
   font-size: 0.9rem;
   table-layout: fixed;
-  margin: 0 0 20px 0;
-  border: 1px solid #ccc;
 }
 
 #preview-content th,
 #preview-content td {
   border: 1px solid #ddd;
-  padding: 8px 10px;
-  text-align: left;
-  letter-spacing: 0.5px;
-  white-space: normal;
-  word-wrap: break-word;
+  padding: 8px;
+  text-align: center;
   vertical-align: middle;
+  word-wrap: break-word;
 }
 
-.table-title-cell {
-  background-color: var(--black);
-  color: var(--white1);
-  font-weight: bold;
-  letter-spacing: normal !important;
-  font-family: monospace;
-  font-size: 1.1rem;
-  text-align: center;
-  padding: 12px 8px;
-  border: 1px solid var(--black);
+/* Anchos para 3 columnas: N°, Docente, Estado/Hora */
+#preview-content th:nth-child(1) {
+  width: 10%;
+}
+#preview-content th:nth-child(2) {
+  width: 60%;
+  text-align: left;
+}
+#preview-content td:nth-child(2) {
+  text-align: left;
+}
+#preview-content th:nth-child(3) {
+  width: 30%;
 }
 
 .table-header th {
   background-color: #e9e9e9;
-  color: var(--black);
   font-weight: bold;
-  text-align: center;
-  top: -15px;
-  z-index: 9;
-  border-bottom: 2px solid #bbb;
 }
 
-/* Anchos de columna sugeridos */
-.table-header th:nth-child(1) {
-  width: 5%;
-  text-align: center;
-} /* N° */
-.table-header th:nth-child(2) {
-  width: 35%;
-  text-align: left;
-} /* DOCENTE */
-.table-header th:nth-child(3) {
-  width: 10%;
-  text-align: center;
-} /* TURNO */
-.table-header th:nth-child(4) {
-  width: 25%;
-  text-align: center;
-} /* DÍAS */
-.table-header th:nth-child(5) {
-  width: 25%;
-  text-align: center;
-} /* HORA */
+/* === COLORES DE ESTADO (Coinciden con excel.constants.js) === */
 
-.table-data td {
-  background-color: var(--white1);
-  color: var(--black);
-}
-.table-data td:nth-child(1),
-.table-data td:nth-child(3),
-.table-data td:nth-child(4),
-.table-data td:nth-child(5) {
-  text-align: center;
-}
-
-/* Estados de Asistencia (Colores) */
-.table-data td.status-puntual {
+/* Verde: Puntual */
+.status-puntual {
   background-color: #c6efce;
   color: #006100;
   font-weight: bold;
 }
-.table-data td.status-tolerancia {
+
+/* Naranja: Tolerancia, Tardanza Justificada, Falta Justificada */
+.status-tolerancia,
+.status-tardanza_justificada,
+.status-falta_justificada {
   background-color: #ffeb9c;
   color: #9c5700;
   font-weight: bold;
 }
-.table-data td.status-tarde {
+
+/* Rojo: Tarde */
+.status-tarde {
   background-color: #ffc7ce;
   color: #9c0006;
   font-weight: bold;
 }
-.table-data td.status-falta {
+
+/* Gris: Falta */
+.status-falta {
   background-color: #d9d9d9;
-  color: #333333;
-  font-weight: bold;
-}
-.table-data td.status-no_asiste {
-  background-color: #c0c0c0;
-  color: #404040;
-  font-style: italic;
-  font-weight: bold;
-}
-.table-data td.status-docente {
-  background-color: #bdd7ee;
-  color: #1f4e78;
-  font-weight: bold;
-}
-.table-data td.status-registrado {
-  background-color: #e7e6e6;
-  color: #000000;
-  font-weight: bold;
-}
-.table-data td.status-falta_justificada {
-  background-color: #ffeb9c;
-  color: #9c6500;
-  font-weight: bold;
-}
-.table-data td.status-tardanza_justificada {
-  background-color: #ffeb9c;
-  color: #9c6500;
+  color: #333;
   font-weight: bold;
 }
 
-/* Pestañas de Vista Previa */
+/* Gris Claro: No Asiste */
+.status-no_asiste {
+  background-color: #c0c0c0;
+  font-style: italic;
+  color: #404040;
+}
+
+/* Default */
+.status-registrado {
+  background-color: #e7e6e6;
+}
+
+/* Pestañas */
 .preview-tab-container {
   display: flex;
   border-bottom: 1px solid var(--white2);
-  margin-bottom: 0;
 }
-
 .preview-tab {
   padding: 10px 15px;
   cursor: pointer;
   border: 1px solid transparent;
   border-bottom: none;
   margin-right: 5px;
-  background-color: var(--white1);
-  color: var(--black);
-  border-radius: 5px 5px 0 0;
+  background: var(--white1);
   font-weight: bold;
-  font-family: var(--font-body);
-  transition: background-color 0.3s, color 0.3s;
 }
-
-.preview-tab:hover {
-  background-color: var(--white2);
-}
-
 .preview-tab.active {
-  background-color: #fff;
+  background: #fff;
   color: var(--red);
   border-color: var(--white2) var(--white2) #fff var(--white2);
 }
-
 .preview-tab-content {
   display: none;
 }

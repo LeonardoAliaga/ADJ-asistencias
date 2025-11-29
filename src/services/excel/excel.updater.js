@@ -1,7 +1,8 @@
-// src/services/excel/excel.updater.js (LIMPIO)
+// src/services/excel/excel.updater.js
 const {
-  estiloFalta,
-  estiloNoAsiste,
+  estiloPuntual,
+  estiloOrange,
+  estiloTarde,
   estiloDocenteRegistrado,
   estiloDatosBase,
   centerAlignment,
@@ -11,15 +12,25 @@ const {
   normalizarTexto,
   convertTo12Hour,
   getFullName,
+  getLogHeader,
 } = require("../../utils/helpers");
 const { applyBaseDataRowStyles } = require("./excel.helpers.js");
+const color = require("ansi-colors");
 
-function updateAttendanceRecord(hoja, usuario, horaStr, isJustified = false) {
+const FILE_TAG = "excel.updater.js";
+
+function updateAttendanceRecord(
+  hoja,
+  usuario,
+  horaStr,
+  isJustified = false,
+  estado = "tarde"
+) {
   let filaEncontrada = null;
   let numFila = -1;
 
-  // Buscar la fila del usuario por nombre
   hoja.eachRow((row, rowNumber) => {
+    // Nombre en Columna 2
     const celdaNombre = row.getCell(2);
     if (!celdaNombre || !celdaNombre.value) return;
 
@@ -30,25 +41,23 @@ function updateAttendanceRecord(hoja, usuario, horaStr, isJustified = false) {
       nombreCelda = nombreCelda.text;
     }
 
-    const cellNorm = normalizarTexto(String(nombreCelda));
-    const preferredNorm = normalizarTexto(getFullName(usuario));
-
-    if (cellNorm === preferredNorm) {
+    if (
+      normalizarTexto(String(nombreCelda)) ===
+      normalizarTexto(getFullName(usuario))
+    ) {
       filaEncontrada = row;
       numFila = rowNumber;
-      return false; // Break loop
+      return false;
     }
   });
 
-  if (!filaEncontrada) {
-    console.log(`❌ No se encontró a ${getFullName(usuario)} en la hoja.`);
-    return false;
-  }
+  if (!filaEncontrada) return false;
 
-  const celdaHora = filaEncontrada.getCell(5);
+  // Celda de Hora es la 3
+  const celdaHora = filaEncontrada.getCell(3);
   const valorCelda = (celdaHora.value || "").toString().trim().toUpperCase();
 
-  // Validar si ya tiene registro (permitir sobrescribir solo si es FALTA, NO ASISTE, etc.)
+  // Validar si ya está registrado (y no es falta)
   if (
     valorCelda !== "" &&
     valorCelda !== "FALTA" &&
@@ -56,48 +65,30 @@ function updateAttendanceRecord(hoja, usuario, horaStr, isJustified = false) {
     valorCelda !== "F. JUSTIFICADA" &&
     !valorCelda.endsWith("(J)")
   ) {
-    console.log(
-      `⚠️ ${getFullName(usuario)} ya tiene registro: ${valorCelda}. Ignorado.`
-    );
     return false;
   }
 
   const hora12h = convertTo12Hour(horaStr);
   let valorHoraParaExcel = hora12h;
+  let estiloCeldaHora = estiloDocenteRegistrado; // Fallback
 
-  // Lógica Docente: Siempre aplica estilo azul
+  // Definir color según estado
   if (isJustified) {
     valorHoraParaExcel = `${hora12h} (J)`;
+    estiloCeldaHora = estiloOrange;
+  } else {
+    if (estado === "puntual") estiloCeldaHora = estiloPuntual;
+    else if (estado === "tolerancia") estiloCeldaHora = estiloOrange;
+    else if (estado === "tarde") estiloCeldaHora = estiloTarde;
   }
-  const estiloCeldaHora = estiloDocenteRegistrado;
 
-  // Preparar valores para actualizar la fila preservando datos existentes
-  const numOriginal = filaEncontrada.getCell(1).value;
-  const nombreOriginal = filaEncontrada.getCell(2).value;
-  const turnoOriginal = filaEncontrada.getCell(3).value; // Debería estar vacío o ser irrelevante
-  const diasOriginal = filaEncontrada.getCell(4).value;
+  // IMPORTANTE: Escribir DIRECTAMENTE en las celdas, sin usar spliceRows para no mover nada
+  // Col 1: No se toca (N°)
+  // Col 2: No se toca (Nombre)
 
-  const nuevaFilaValores = [
-    numOriginal,
-    nombreOriginal,
-    turnoOriginal,
-    diasOriginal,
-    valorHoraParaExcel,
-  ];
-
-  hoja.spliceRows(numFila, 1, nuevaFilaValores);
-  const filaActualizada = hoja.getRow(numFila);
-
-  // Re-aplicar estilos base a toda la fila
-  applyBaseDataRowStyles(
-    filaActualizada,
-    estiloDatosBase,
-    centerAlignment,
-    leftAlignment
-  );
-
-  // Aplicar estilo específico a la celda de hora
-  filaActualizada.getCell(5).style = {
+  // Col 3: Hora + Estilo
+  celdaHora.value = valorHoraParaExcel;
+  celdaHora.style = {
     fill: { ...estiloCeldaHora.fill },
     font: { ...estiloCeldaHora.font },
     alignment: { ...estiloCeldaHora.alignment },
@@ -105,13 +96,11 @@ function updateAttendanceRecord(hoja, usuario, horaStr, isJustified = false) {
   };
 
   console.log(
-    `✅ Asistencia actualizada para ${getFullName(
-      usuario
-    )}: ${valorHoraParaExcel}`
+    `${getLogHeader(FILE_TAG)} ${color.green(
+      "Asistencia actualizada:"
+    )} ${valorHoraParaExcel} (${estado})`
   );
   return true;
 }
 
-module.exports = {
-  updateAttendanceRecord,
-};
+module.exports = { updateAttendanceRecord };

@@ -1,4 +1,4 @@
-// src/services/excel/excel.generator.js (LIMPIO)
+// src/services/excel/excel.generator.js
 const fs = require("fs");
 const path = require("path");
 const { getFullName } = require("../../utils/helpers.js");
@@ -25,27 +25,24 @@ function generateTeacherSheetStructure(hoja, nombreColumnaFecha, diaAbbr) {
       return ka.localeCompare(kb, "es");
     });
 
-  // Título
+  // Título: Merge solo A hasta C (3 columnas)
   hoja.getCell(`A${fila}`).value = "REGISTRO DE ASISTENCIA - DOCENTES";
-  hoja.mergeCells(`A${fila}:E${fila}`);
+  hoja.mergeCells(`A${fila}:C${fila}`);
   hoja.getCell(`A${fila}`).font = { bold: true, size: 14 };
   hoja.getCell(`A${fila}`).alignment = { horizontal: "center" };
   fila++;
 
-  // Encabezado
-  hoja.getRow(fila).values = [
-    "N°",
-    "DOCENTE",
-    "TURNO",
-    "DÍAS ASISTENCIA",
-    nombreColumnaFecha,
-  ];
-  hoja.getRow(fila).eachCell((cell) => {
+  // Encabezado: Solo 3 valores
+  hoja.getRow(fila).values = ["N°", "DOCENTE", nombreColumnaFecha];
+
+  // Estilar las 3 celdas del encabezado
+  for (let c = 1; c <= 3; c++) {
+    const cell = hoja.getRow(fila).getCell(c);
     cell.style = {
       ...estiloEncabezadoBase,
       fill: { ...fillEncabezadoDocente },
     };
-  });
+  }
   fila++;
 
   // Datos
@@ -53,16 +50,9 @@ function generateTeacherSheetStructure(hoja, nombreColumnaFecha, diaAbbr) {
     const isScheduled =
       doc.dias_asistencia && doc.dias_asistencia.includes(diaAbbr);
     const initialStatus = isScheduled ? "FALTA" : "NO ASISTE";
-    const diasAsistenciaStr = doc.dias_asistencia
-      ? doc.dias_asistencia.join(", ")
-      : "";
-    const row = hoja.addRow([
-      i + 1,
-      getFullName(doc),
-      "",
-      diasAsistenciaStr,
-      initialStatus,
-    ]);
+
+    // Fila con solo 3 valores
+    const row = hoja.addRow([i + 1, getFullName(doc), initialStatus]);
 
     applyBaseDataRowStyles(
       row,
@@ -71,8 +61,9 @@ function generateTeacherSheetStructure(hoja, nombreColumnaFecha, diaAbbr) {
       leftAlignment
     );
 
+    // Pintar celda 3 (Estado inicial)
     const styleToApply = isScheduled ? estiloFalta : estiloNoAsiste;
-    row.getCell(5).style = {
+    row.getCell(3).style = {
       fill: { ...styleToApply.fill },
       font: { ...styleToApply.font },
       alignment: { ...styleToApply.alignment },

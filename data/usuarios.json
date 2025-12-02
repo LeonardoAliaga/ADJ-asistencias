@@ -4,7 +4,14 @@
     "nombre": "ALAN OSCAR",
     "apellido": "ALIAGA PEREZ",
     "rol": "docente",
-    "dias_asistencia": ["L", "M", "MI", "J", "V", "S"],
+    "dias_asistencia": [
+      "L",
+      "M",
+      "MI",
+      "J",
+      "V",
+      "S"
+    ],
     "turno": "",
     "ciclo": "",
     "nombre_completo": "ALIAGA PEREZ ALAN OSCAR"
@@ -14,7 +21,13 @@
     "nombre": "MARIA ELENA",
     "apellido": "GARCIA LOPEZ",
     "rol": "docente",
-    "dias_asistencia": ["L", "M", "MI", "J", "V"],
+    "dias_asistencia": [
+      "L",
+      "M",
+      "MI",
+      "J",
+      "V"
+    ],
     "turno": "",
     "ciclo": "",
     "nombre_completo": "GARCIA LOPEZ MARIA ELENA"
@@ -24,7 +37,14 @@
     "nombre": "CARLOS ALBERTO",
     "apellido": "SANCHEZ SOLANO",
     "rol": "docente",
-    "dias_asistencia": ["L", "M", "MI", "J", "V", "S"],
+    "dias_asistencia": [
+      "L",
+      "M",
+      "MI",
+      "J",
+      "V",
+      "S"
+    ],
     "turno": "",
     "ciclo": "",
     "nombre_completo": "SANCHEZ SOLANO CARLOS ALBERTO"
@@ -34,9 +54,29 @@
     "nombre": "ISABEL CRISTINA",
     "apellido": "TORRES MENDOZA",
     "rol": "docente",
-    "dias_asistencia": ["L", "MI", "V"],
+    "dias_asistencia": [
+      "L",
+      "MI",
+      "V"
+    ],
     "turno": "",
     "ciclo": "",
     "nombre_completo": "TORRES MENDOZA ISABEL CRISTINA"
+  },
+  {
+    "codigo": "10668586",
+    "nombre": "CARLA DAYDAMIA",
+    "apellido": "URIONDO MANINI",
+    "rol": "docente",
+    "dias_asistencia": [
+      "L",
+      "M",
+      "MI",
+      "J",
+      "V",
+      "S"
+    ],
+    "turno": "",
+    "ciclo": ""
   }
 ]

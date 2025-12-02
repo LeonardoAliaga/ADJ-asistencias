@@ -24,7 +24,7 @@ li {
 
 li:hover {
   background-color: #ffffff;
-  border-left: 5px solid var(--red2);
+  border-left: 5px solid #0380bc;
 }
 
 /* Botones ocultos por defecto, visibles en hover */

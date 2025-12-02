@@ -6,8 +6,8 @@
 
 form div {
   display: flex;
-  flex-wrap: nowrap;
   gap: 20px;
+  justify-content: center;
 }
 
 label,
@@ -54,8 +54,8 @@ select {
 
 input:focus,
 select:focus {
-  border-color: var(--red2);
-  box-shadow: 0 0 0 0.2rem rgba(218, 43, 8, 0.25);
+  border-color: #047fbf;
+  box-shadow: 0 0 0 0.2rem rgb(4 128 191 / 44%);
   outline: none;
 }
 
@@ -80,7 +80,7 @@ button {
 }
 
 button[type="submit"] {
-  background-color: var(--red);
+  background-color: #0480bc;
   color: var(--white1);
   border: none;
   cursor: pointer;
@@ -93,7 +93,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-  background-color: var(--red2);
+  background-color: #058ccf;
   transform: translateY(-2px);
 }
 
@@ -121,9 +121,9 @@ button[type="submit"]:hover {
   cursor: pointer;
 }
 .day-btn.active {
-  background-color: var(--red);
+  background-color: #045f8b;
   color: var(--white1);
-  border-color: var(--red2);
+  border-color: #045e8b;
 }
 .day-btn:hover:not(.active) {
   background-color: #ddd;
@@ -132,7 +132,7 @@ button[type="submit"]:hover {
 /* Selector de Hora (Horarios) */
 .time-picker-group {
   flex-grow: 1;
-  min-width: 250px;
+  min-width: 100%;
   width: auto;
 }
 
@@ -142,7 +142,7 @@ button[type="submit"]:hover {
   font-weight: bold;
   font-size: 0.9rem;
   color: var(--black);
-  width: 100%;
+  width: 5rem;
 }
 
 .time-picker-inputs {
